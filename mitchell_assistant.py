@@ -2,16 +2,28 @@ import os
 import sys
 import json
 import asyncio
+import argparse
 from openai import AsyncOpenAI
 from mcp.client.stdio import stdio_client, StdioServerParameters
 from mcp.client.session import ClientSession
 
 async def main():
+    parser = argparse.ArgumentParser(description="Mitchell AI - Peak Assistant")
+    parser.add_argument("--remote", action="store_true", help="Start in Remote Host mode (connects to relay server)")
+    parser.add_argument("--relay", type=str, default="ws://127.0.0.1:8765", help="Relay server WS URL")
+    args = parser.parse_args()
+
     api_key = os.environ.get("AICREDITS_API_KEY")
     if not api_key:
         print("Error: AICREDITS_API_KEY environment variable not set.")
         print("Please set it in your environment using: setx AICREDITS_API_KEY \"your_key\"")
         sys.exit(1)
+
+    if args.remote:
+        from system_mcp.remote.host_agent import RemoteHostAgent
+        agent = RemoteHostAgent(api_key=api_key, relay_url=args.relay)
+        await agent.run()
+        return
 
     print("=========================================")
     print("      Mitchell AI - Peak Assistant       ")
