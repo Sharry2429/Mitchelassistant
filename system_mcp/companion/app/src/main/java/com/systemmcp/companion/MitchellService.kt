@@ -88,10 +88,14 @@ class MitchellService : Service() {
     }
 
     private var wakeWordService: WakeWordService? = null
+    private var relayClient: RelayClient? = null
 
     override fun onCreate() {
         super.onCreate()
         instance = this
+        // Hardcode a default relay for testing. In production, get this from preferences.
+        relayClient = RelayClient("ws://192.168.1.100:8765", "abcd123", "")
+        relayClient?.connect()
         registerBaseTools()
         OverlayService.registerTools()
         AudioStreamService.registerTools()
@@ -117,6 +121,16 @@ class MitchellService : Service() {
     }
 
     private fun registerBaseTools() {
+        ToolRegistry.register("shizuku_check") {
+            ToolRegistry.successResult(mapOf("running" to ShizukuManager.checkPermission()))
+        }
+
+        ToolRegistry.register("shizuku_shell") { root ->
+            val command = if (root.has("command") && !root.get("command").isJsonNull) root.get("command").asString else throw Exception("Missing 'command'")
+            val output = ShizukuManager.executeShellCommand(command)
+            ToolRegistry.successResult(mapOf("output" to output))
+        }
+
         ToolRegistry.register("get_clipboard") {
             val service = MCPAccessibilityService.instance
                 ?: throw Exception("MCPAccessibilityService is not enabled/connected")
@@ -221,6 +235,7 @@ class MitchellService : Service() {
         super.onDestroy()
         isServerRunning = false
         serviceJob.cancel()
+        relayClient?.disconnect()
         try {
             serverSocket?.close()
         } catch (_: Exception) {}

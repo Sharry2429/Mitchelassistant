@@ -79,6 +79,9 @@ dependencies {
   implementation("com.google.code.gson:gson:2.11.0")
   implementation("androidx.car.app:app:1.4.0")
   implementation("androidx.savedstate:savedstate-ktx:1.2.1")
+  implementation("dev.rikka.shizuku:api:13.1.0")
+  implementation("dev.rikka.shizuku:provider:13.1.0")
+  implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)

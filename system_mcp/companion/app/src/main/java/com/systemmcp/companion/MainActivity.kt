@@ -107,57 +107,75 @@ fun DashboardScreen(modifier: Modifier = Modifier, requestPermissions: (Array<St
         }
     }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        item {
-            HeaderSection(isConnected = isConnected) {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                if (isConnected) {
-                    MitchellService.stopCompanion(context)
-                } else {
-                    MitchellService.startCompanion(context, "system_mcp_secret")
-                }
-                isConnected = !isConnected
-            }
-        }
+    var currentTab by remember { mutableStateOf("dashboard") }
 
-        item {
-            PermissionsSection(
-                isAssistantRole = isAssistantRole,
-                isOverlayGranted = isOverlayGranted,
-                isCallPhoneGranted = isCallPhoneGranted,
-                onRequestAssistant = {
-                    val intent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
-                    context.startActivity(intent)
-                },
-                onRequestOverlay = {
-                    val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-                    context.startActivity(intent)
-                },
-                onRequestCallPhone = {
-                    requestPermissions(arrayOf(android.Manifest.permission.CALL_PHONE, android.Manifest.permission.READ_CALL_LOG, android.Manifest.permission.RECORD_AUDIO))
+    Column(modifier = modifier.fillMaxSize()) {
+        if (currentTab == "dashboard") {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                item {
+                    HeaderSection(isConnected = isConnected) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        if (isConnected) {
+                            MitchellService.stopCompanion(context)
+                        } else {
+                            MitchellService.startCompanion(context, "system_mcp_secret")
+                        }
+                        isConnected = !isConnected
+                    }
+                }
+
+                item {
+                    PermissionsSection(
+                        isAssistantRole = isAssistantRole,
+                        isOverlayGranted = isOverlayGranted,
+                        isCallPhoneGranted = isCallPhoneGranted,
+                        onRequestAssistant = {
+                            val intent = Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)
+                            context.startActivity(intent)
+                        },
+                        onRequestOverlay = {
+                            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+                            context.startActivity(intent)
+                        },
+                        onRequestCallPhone = {
+                            requestPermissions(arrayOf(android.Manifest.permission.CALL_PHONE, android.Manifest.permission.READ_CALL_LOG, android.Manifest.permission.RECORD_AUDIO))
+                        }
+                    )
+                }
+            }
+        } else {
+            androidx.compose.ui.viewinterop.AndroidView(
+                modifier = Modifier.weight(1f),
+                factory = { ctx ->
+                    android.webkit.WebView(ctx).apply {
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        webViewClient = android.webkit.WebViewClient()
+                        loadUrl("file:///android_asset/www/index.html")
+                    }
                 }
             )
         }
 
-        item {
-            StreamDeckEditorSection(
-                buttons = streamDeckButtons,
-                onAdd = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    val newId = (streamDeckButtons.maxOfOrNull { it.id } ?: 0) + 1
-                    streamDeckButtons = streamDeckButtons + StreamDeckButton(newId, "New Action", "new_tool")
-                    // In a real app we'd save this back to OverlayService
-                },
-                onDelete = { id ->
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    streamDeckButtons = streamDeckButtons.filter { it.id != id }
-                }
+        // Bottom Navigation
+        NavigationBar {
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.CheckCircle, contentDescription = "Dashboard") },
+                label = { Text("Dashboard") },
+                selected = currentTab == "dashboard",
+                onClick = { currentTab = "dashboard" }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Call, contentDescription = "Remote") },
+                label = { Text("Remote") },
+                selected = currentTab == "remote",
+                onClick = { currentTab = "remote" }
             )
         }
     }

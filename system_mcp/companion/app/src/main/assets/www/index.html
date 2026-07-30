@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Mitchell Remote</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-Daug6yM3.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-C9Q3NktK.css">
+  </head>
+  <body>
+    <div id="app">
+        <!-- Connection Overlay -->
+        <div id="connection-overlay" class="overlay active">
+            <div class="glass-card">
+                <h1>Mitchell Remote</h1>
+                <p>Secure E2EE Bridge</p>
+                <form id="connect-form">
+                    <div class="input-group">
+                        <label for="relay-url">Relay URL</label>
+                        <input type="text" id="relay-url" value="ws://127.0.0.1:8765" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="room-id">Room ID</label>
+                        <input type="text" id="room-id" placeholder="e.g. abcd123" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="pairing-key">Pairing Key (Base64Url)</label>
+                        <input type="password" id="pairing-key" placeholder="Paste key from host..." required>
+                    </div>
+                    <button type="submit" class="btn-primary">Connect</button>
+                    <p id="connect-error" class="error-text hidden"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Chat / Terminal UI -->
+        <div id="main-ui" class="hidden">
+            <header class="app-header">
+                <div class="header-left">
+                    <div class="status-indicator online"></div>
+                    <h2>MitchellAI</h2>
+                </div>
+                <button id="disconnect-btn" class="btn-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+            </header>
+            
+            <div class="chat-container" id="chat-container">
+                <div class="message system">
+                    Connected securely via AES-GCM encryption. The relay server cannot read these messages.
+                </div>
+            </div>
+
+            <form id="chat-form" class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Message Mitchell..." autocomplete="off">
+                <button type="submit" class="send-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+  </body>
+</html>
