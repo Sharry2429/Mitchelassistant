@@ -6,7 +6,7 @@ from system_mcp.android import adb
 from system_mcp.core.result import MCPResult
 from system_mcp.core.errors import RequiresCompanionApp
 from system_mcp.android.base import require_companion
-from system_mcp.android.screen_stream import get_single_frame
+from system_mcp.android.hardware import get_single_frame
 import base64
 from typing import Dict
 from typing import Any

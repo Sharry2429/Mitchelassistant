@@ -1,5 +1,5 @@
 """
-system_mcp.android.companion.bridge
+system_mcp.android.bridge
 Python client for the Mitchell AI Companion APK socket server.
 
 Protocol:
@@ -25,7 +25,23 @@ import socket
 import json
 import struct
 import threading
+import os
+import secrets
 from typing import Callable, Any, Optional
+
+def get_auth_token() -> str:
+    token_file = os.path.join(os.path.expanduser("~"), ".system_mcp_bridge_token")
+    if os.path.exists(token_file):
+        with open(token_file, "r") as f:
+            return f.read().strip()
+    token = secrets.token_hex(16)
+    try:
+        with open(token_file, "w") as f:
+            f.write(token)
+    except Exception:
+        return token
+    return token
+
 
 from system_mcp.core.errors import RequiresCompanionApp, RequiresCompanionUpdate, SystemMCPError
 
@@ -38,10 +54,10 @@ class CompanionBridge:
     Communicates via a local TCP socket forwarded over ADB.
     """
 
-    def __init__(self, port: int = 5000, token: str = "system_mcp_secret"):
+    def __init__(self, port: int = 5000, token: Optional[str] = None):
         self.host = "127.0.0.1"
         self.port = port
-        self.token = token
+        self.token = token or get_auth_token()
         self._socket: Optional[socket.socket] = None
         self._lock = threading.Lock()
         self._stream_thread: Optional[threading.Thread] = None

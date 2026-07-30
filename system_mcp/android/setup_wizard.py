@@ -7,6 +7,7 @@ import time
 import subprocess
 from pathlib import Path
 from colorama import Fore, Style, init
+from system_mcp.android.bridge import get_auth_token
 
 init(autoreset=True)
 
@@ -106,7 +107,7 @@ def install_and_configure(device_serial: str):
         "adb", "-s", device_serial, "shell", "am", "start-foreground-service", 
         "-a", "android.intent.action.MAIN", 
         "-n", "com.systemmcp.companion/.MitchellService", 
-        "--es", "token", "system_mcp_secret"
+        "--es", "token", get_auth_token()
     ], capture_output=True)
     print_success("Service started!")
     return True

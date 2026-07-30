@@ -207,7 +207,7 @@ def move_window(title: str, x: int, y: int) -> bool:
 
 def list_installed_apps() -> List[Dict[str, str]]:
     """Get from Start Menu + registry."""
-    from system_mcp.windows.sysinfo import get_installed_programs
+    from system_mcp.windows.system import get_installed_programs
     return get_installed_programs()
 
 

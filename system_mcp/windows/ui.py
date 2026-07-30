@@ -4,8 +4,9 @@ from system_mcp.windows.config import get_config
 from system_mcp.windows.core.powershell import execute
 from system_mcp.windows.core.screenshot import capture_screen, image_to_bytes, save_screenshot
 from system_mcp.windows.types import (
-from typing import Optional
-from typing import Optional, List
+    DesktopState, Window, WindowStatus, UIElement,
+    BoundingBox, DisplayInfo, ScreenshotResult, TreeState
+)
 from typing import Optional, List, Tuple
 import ctypes
 import psutil
@@ -18,10 +19,6 @@ import win32process
 
 # --- desktop.py ---
 
-
-    DesktopState, Window, WindowStatus, UIElement, 
-    BoundingBox, DisplayInfo, ScreenshotResult, TreeState
-)
 
 __all__ = [
     'snapshot',

@@ -25,8 +25,8 @@ def register_platform_tools(platform: str, module_names: list[str]):
                         mcp.add_tool(func)
                     except (ValueError, TypeError, Exception) as e:
                         print(f"Skipping tool {tool_name}: {e}")
-        except ImportError:
-            pass
+        except ImportError as e:
+            print(f"ImportError loading {platform}.{mod_name}: {e}")
 
 # Windows Modules
 windows_modules = [

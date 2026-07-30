@@ -120,7 +120,7 @@ def send_keys(text: str) -> None:
     
     This handles plain text. For special keys, use the input module.
     """
-    from system_mcp.windows.input import type_text
+    from system_mcp.windows.ui import type_text
     type_text(text)
 
 

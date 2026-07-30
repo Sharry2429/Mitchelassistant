@@ -34,8 +34,7 @@ all = ["fastmcp>=2.0", "tabulate"]
 
 [project.scripts]
 system-mcp = "system_mcp.cli:main"
-system-mcp-android-mcp = "system_mcp.android.mcp_server:main"
-system-mcp-windows-mcp = "system_mcp.windows.mcp_server:main"
+system-mcp-server = "system_mcp.mcp_server:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]

@@ -13,8 +13,7 @@ from system_mcp.core.errors import DeviceOffline
 from system_mcp.core.errors import RequiresCompanionApp
 from system_mcp.core.audit import log_action
 import urllib.parse
-from system_mcp.android.notification import get_active_notifications
-from system_mcp.android import contacts
+
 from system_mcp.core.errors import PermissionDenied
 '\nsystem_mcp.android.phone\nPhone calling and call history management via ADB and Mitchell AI Companion.\n'
 
@@ -253,7 +252,7 @@ def search_contact(name: str) -> MCPResult:
     """Search for a contact's WhatsApp number by querying the android.contacts module."""
     try:
         require_enabled('whatsapp', 'search_contact')
-        res = contacts.list_contacts()
+        res = list_contacts()
         if not res.ok:
             return res
         target_name = name.lower()

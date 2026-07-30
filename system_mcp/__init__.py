@@ -9,7 +9,7 @@ Modules:
 
 Import the platform you need directly:
     import system_mcp.windows as wc
-    from system_mcp.android.desktop import get_screen
+    from system_mcp.windows.system import shutdown
 """
 
 __version__ = "0.1.0"

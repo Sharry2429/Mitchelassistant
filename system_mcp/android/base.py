@@ -28,7 +28,7 @@ def get_companion_bridge():
     """
     global _bridge_instance
     if _bridge_instance is None:
-        from system_mcp.android.companion.bridge import CompanionBridge
+        from system_mcp.android.bridge import CompanionBridge
         _bridge_instance = CompanionBridge()
     return _bridge_instance
 
