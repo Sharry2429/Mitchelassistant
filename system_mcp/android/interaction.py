@@ -6,14 +6,14 @@ from system_mcp.android import adb
 from system_mcp.core.result import MCPResult
 from system_mcp.core.errors import RequiresCompanionApp
 from system_mcp.android.base import require_companion
-from system_mcp.android.hardware import get_single_frame
+from system_mcp.android.hardware import grab_frame
 import base64
 from typing import Dict
 from typing import Any
 from system_mcp.android.base import require_enabled
 from system_mcp.core.errors import DeviceOffline
 from typing import List
-from system_mcp.core.errors import RoleAssistantRequired
+from system_mcp.core.errors import SystemMCPError
 
 def tap(x: int, y: int) -> MCPResult:
     log_action('input', 'tap', {'x': x, 'y': y}, {})
@@ -118,7 +118,7 @@ def analyze_screen(prompt: str) -> MCPResult:
     along with the prompt.
     """
     try:
-        frame_res = get_single_frame()
+        frame_res = grab_frame()
         if not frame_res.success:
             return frame_res
         image_bytes = frame_res.data
