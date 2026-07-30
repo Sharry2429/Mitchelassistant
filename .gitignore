@@ -1,0 +1,40 @@
+# Gradle
+gradle-dist-9/
+gradle-dist/
+.gradle/
+build/
+companion/build/
+companion/.gradle/
+*.apk
+*.aab
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Secrets / env
+.env
+*.key
+*.pem
+
+# Archives / backups (old junk from before)
+*.zip
+*.bak

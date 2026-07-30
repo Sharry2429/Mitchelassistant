@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Mitchell AI</string>
+    <string name="accessibility_service_label">Mitchell AI Accessibility Service</string>
+    <string name="notification_listener_label">Mitchell AI Notification Listener</string>
+</resources>

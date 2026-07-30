@@ -1,0 +1,46 @@
+[project]
+name = "system-mcp"
+version = "0.1.0"
+description = "Control your own devices from Python or via MCP. Features unified Windows and Android automation (USB-once/wireless-forever)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["automation", "mcp", "agent", "android", "windows", "uiautomator2", "zeroconf"]
+
+dependencies = [
+    # Android Dependencies
+    "uiautomator2>=3.0",
+    "Pillow>=9.0",
+    "zeroconf>=0.132.0",
+    
+    # Windows Dependencies
+    "comtypes>=1.4.15",
+    "fuzzywuzzy>=0.18.0",
+    "python-levenshtein>=0.27.0",
+    "markdownify>=1.1.0",
+    "psutil>=7.0.0",
+    "pywin32>=310",
+    "pyvda>=0.6.0",
+    
+    # Shared Dependencies
+    "pydantic>=2.0",
+    "requests>=2.32.0",
+]
+
+[project.optional-dependencies]
+mcp = ["fastmcp>=2.0"]
+pretty = ["tabulate"]
+all = ["fastmcp>=2.0", "tabulate"]
+
+[project.scripts]
+system-mcp = "system_mcp.cli:main"
+system-mcp-android-mcp = "system_mcp.android.mcp_server:main"
+system-mcp-windows-mcp = "system_mcp.windows.mcp_server:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["system_mcp*"]
