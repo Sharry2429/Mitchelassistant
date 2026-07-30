@@ -100,8 +100,15 @@ class MitchellVoiceInteractionSession(context: Context) : VoiceInteractionSessio
 fun AssistantOverlayUI(onClose: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var query by remember { mutableStateOf("") }
-    var responseText by remember { mutableStateOf("Ready to analyze screen or run local commands.") }
-    val agentLoop = remember { AgentLoop(context) }
+    
+    // Dynamic routing states
+    val isPcLinked = remember { MitchellService.isRelayConnected() }
+    val subtitleText = if (isPcLinked) "PC Link Active (Thin Client)" else "Standalone LLM Active"
+    val placeholderText = if (isPcLinked) "Ask PC Mitchell..." else "Ask Standalone Mitchell..."
+    val indicatorColor = if (isPcLinked) Color(0xFF34D399) else Color(0xFF60A5FA)
+
+    var responseText by remember { mutableStateOf(subtitleText) }
+    val router = remember { MitchellRouter(context) }
     
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
         Box(
@@ -117,11 +124,20 @@ fun AssistantOverlayUI(onClose: () -> Unit) {
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(24.dp)
         ) {
-            Text(
-                text = "Mitchell AI (God-Mode)",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(indicatorColor)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Mitchell AI (God-Mode)",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(text = responseText, style = MaterialTheme.typography.bodyLarge)
@@ -131,7 +147,7 @@ fun AssistantOverlayUI(onClose: () -> Unit) {
                 value = query,
                 onValueChange = { query = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Ask anything...") },
+                placeholder = { Text(placeholderText) },
                 shape = RoundedCornerShape(16.dp)
             )
             
@@ -142,16 +158,13 @@ fun AssistantOverlayUI(onClose: () -> Unit) {
                 }
                 Button(onClick = {
                     if (query.isNotEmpty()) {
-                        responseText = "Thinking..."
+                        responseText = "Routing query..."
                         val q = query
                         query = ""
-                        agentLoop.sendMessage(q) { update ->
-                            // Update UI on main thread
+                        router.processQuery(q) { update ->
                             if (context is android.app.Activity) {
                                 context.runOnUiThread { responseText = update }
                             } else {
-                                // For services we'd ideally use a Flow or Handler, 
-                                // but for simplicity modifying state here often works in Compose
                                 responseText = update
                             }
                         }

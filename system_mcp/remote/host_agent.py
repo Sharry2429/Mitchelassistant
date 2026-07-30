@@ -80,13 +80,23 @@ class RemoteHostAgent:
                                 try:
                                     data = json.loads(message)
                                     if data.get("type") == "message":
-                                        encrypted_payload = data.get("payload")
-                                        if encrypted_payload:
-                                            raw = base64.b64decode(encrypted_payload)
-                                            nonce, ciphertext = raw[:12], raw[12:]
-                                            decrypted = self.aesgcm.decrypt(nonce, ciphertext, None).decode('utf-8')
-                                            payload_data = json.loads(decrypted)
-                                            user_input = payload_data.get("prompt")
+                                        payload_str = data.get("payload")
+                                        if payload_str:
+                                            # Try decrypting (from Web UI)
+                                            try:
+                                                raw = base64.b64decode(payload_str)
+                                                nonce, ciphertext = raw[:12], raw[12:]
+                                                decrypted = self.aesgcm.decrypt(nonce, ciphertext, None).decode('utf-8')
+                                                payload_data = json.loads(decrypted)
+                                            except Exception:
+                                                # Fallback to unencrypted (from Mobile App Router)
+                                                payload_data = json.loads(payload_str)
+                                                
+                                            if payload_data.get("type") == "assistant_query":
+                                                user_input = payload_data.get("query")
+                                            else:
+                                                user_input = payload_data.get("prompt")
+                                                
                                             if user_input:
                                                 print(f"Remote User: {user_input}")
                                                 await self._process_prompt(user_input, session, openai_tools, websocket)

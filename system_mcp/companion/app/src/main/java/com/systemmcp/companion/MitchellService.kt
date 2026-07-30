@@ -62,6 +62,14 @@ class MitchellService : Service() {
         fun getConnectedClientsCount(): Int = instance?.activeClients?.size ?: 0
         fun getTotalRequests(): Int = instance?.totalRequests ?: 0
         
+        fun isRelayConnected(): Boolean {
+            return instance?.relayClient?.isConnected == true
+        }
+
+        fun sendRemoteQuery(query: String) {
+            instance?.relayClient?.sendQuery(query)
+        }
+        
         fun getUptimeMillis(): Long {
             val inst = instance ?: return 0
             return if (inst.isServerRunning) System.currentTimeMillis() - inst.startTime else 0
