@@ -129,13 +129,13 @@ class MitchellService : Service() {
     }
 
     private fun registerBaseTools() {
-        ToolRegistry.register("shizuku_check") {
-            ToolRegistry.successResult(mapOf("running" to ShizukuManager.checkPermission()))
+        ToolRegistry.register("adb_check") {
+            ToolRegistry.successResult(mapOf("running" to AdbManager.checkPermission()))
         }
 
-        ToolRegistry.register("shizuku_shell") { root ->
+        ToolRegistry.register("adb_shell") { root ->
             val command = if (root.has("command") && !root.get("command").isJsonNull) root.get("command").asString else throw Exception("Missing 'command'")
-            val output = ShizukuManager.executeShellCommand(command)
+            val output = AdbManager.executeShellCommand(command)
             ToolRegistry.successResult(mapOf("output" to output))
         }
 
