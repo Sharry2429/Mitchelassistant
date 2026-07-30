@@ -131,6 +131,10 @@ fun DashboardScreen(modifier: Modifier = Modifier, requestPermissions: (Array<St
                 }
 
                 item {
+                    ApiKeySection(context = context)
+                }
+
+                item {
                     PermissionsSection(
                         isAssistantRole = isAssistantRole,
                         isOverlayGranted = isOverlayGranted,
@@ -484,6 +488,69 @@ fun StreamDeckEditItem(button: StreamDeckButton, onDelete: (Int) -> Unit) {
             }
             IconButton(onClick = { onDelete(button.id) }, modifier = Modifier.size(32.dp)) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFF87171), modifier = Modifier.size(16.dp))
+            }
+        }
+    }
+        }
+    }
+}
+
+@Composable
+fun ApiKeySection(context: Context) {
+    var apiKey by remember { mutableStateOf(ApiKeyManager.getApiKey(context) ?: "") }
+    var isEditing by remember { mutableStateOf(apiKey.isEmpty()) }
+    val haptic = LocalHapticFeedback.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(28.dp))
+            .padding(20.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Mitchell Brain",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = if(apiKey.isNotEmpty()) Color(0xFF34D399) else Color.Gray)
+        }
+        
+        Text(text = "AICredits API Key for Standalone LLM Mode", style = MaterialTheme.typography.labelSmall)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (isEditing) {
+            OutlinedTextField(
+                value = apiKey,
+                onValueChange = { apiKey = it },
+                label = { Text("sk-...") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    ApiKeyManager.saveApiKey(context, apiKey)
+                    isEditing = false
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Save Securely")
+            }
+        } else {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Key is securely stored.", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF34D399))
+                TextButton(onClick = { isEditing = true }) {
+                    Text("Edit")
+                }
             }
         }
     }

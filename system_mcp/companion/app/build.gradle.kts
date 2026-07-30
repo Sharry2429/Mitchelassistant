@@ -82,6 +82,7 @@ dependencies {
   implementation("dev.rikka.shizuku:api:13.1.0")
   implementation("dev.rikka.shizuku:provider:13.1.0")
   implementation("com.squareup.okhttp3:okhttp:4.12.0")
+  implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)

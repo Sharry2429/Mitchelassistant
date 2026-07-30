@@ -5,6 +5,19 @@ import android.content.Context
 import android.os.Bundle
 import android.service.voice.VoiceInteractionSession
 import android.service.voice.VoiceInteractionSessionService
+import android.view.View
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
+import com.systemmcp.companion.ui.theme.MyApplicationTheme
 
 class MitchellVoiceInteractionSessionService : VoiceInteractionSessionService() {
     override fun onNewSession(args: Bundle?): VoiceInteractionSession {
@@ -23,6 +36,16 @@ class MitchellVoiceInteractionSession(context: Context) : VoiceInteractionSessio
         }
     }
 
+    override fun onCreateContentView(): View {
+        return ComposeView(context).apply {
+            setContent {
+                MyApplicationTheme {
+                    AssistantOverlayUI(onClose = { hide() })
+                }
+            }
+        }
+    }
+
     override fun onHandleAssist(
         data: Bundle?,
         structure: AssistStructure?,
@@ -36,18 +59,12 @@ class MitchellVoiceInteractionSession(context: Context) : VoiceInteractionSessio
             lastScreenContext = ""
         }
         
-        // Notify python side that assistant was triggered
+        // Notify python/kotlin side that assistant was triggered
         val payload = mutableMapOf<String, Any?>("event" to "assistant_triggered")
-        
-        // Very basic parsing of structure could go here, or just send a signal
-        // so Python side can call get_accessibility_tree
         payload["has_structure"] = structure != null
         payload["screen_text"] = lastScreenContext
         
         MitchellService.broadcastNotification(payload)
-        
-        // Close the session immediately so we don't block the screen
-        hide()
     }
 
     private fun parseAssistStructure(structure: AssistStructure): String {
@@ -74,6 +91,74 @@ class MitchellVoiceInteractionSession(context: Context) : VoiceInteractionSessio
             val child = node.getChildAt(i)
             if (child != null) {
                 traverseNode(child, builder)
+            }
+        }
+    }
+}
+
+@Composable
+fun AssistantOverlayUI(onClose: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var query by remember { mutableStateOf("") }
+    var responseText by remember { mutableStateOf("Ready to analyze screen or run local commands.") }
+    val agentLoop = remember { AgentLoop(context) }
+    
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(24.dp)
+        ) {
+            Text(
+                text = "Mitchell AI (God-Mode)",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(text = responseText, style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Ask anything...") },
+                shape = RoundedCornerShape(16.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Button(onClick = onClose) {
+                    Text("Close")
+                }
+                Button(onClick = {
+                    if (query.isNotEmpty()) {
+                        responseText = "Thinking..."
+                        val q = query
+                        query = ""
+                        agentLoop.sendMessage(q) { update ->
+                            // Update UI on main thread
+                            if (context is android.app.Activity) {
+                                context.runOnUiThread { responseText = update }
+                            } else {
+                                // For services we'd ideally use a Flow or Handler, 
+                                // but for simplicity modifying state here often works in Compose
+                                responseText = update
+                            }
+                        }
+                    }
+                }) {
+                    Text("Send")
+                }
             }
         }
     }
