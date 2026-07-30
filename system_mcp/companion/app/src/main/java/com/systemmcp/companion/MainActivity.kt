@@ -491,8 +491,6 @@ fun StreamDeckEditItem(button: StreamDeckButton, onDelete: (Int) -> Unit) {
             }
         }
     }
-        }
-    }
 }
 
 @Composable

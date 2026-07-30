@@ -5,6 +5,8 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import okhttp3.*
 import okio.ByteString
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class RelayClient(
     private val relayUrl: String,
