@@ -257,6 +257,9 @@ from system_mcp.windows.apps import (
     download_file,
 )
 
+# ─── TTS (Text-to-Speech) ────────────────────────────────────────────────
+from system_mcp.windows.tts import speak, get_voices
+
 # ─── Convenience: All public names ─────────────────────────────────────────
 __all__ = [
     # Config
@@ -428,6 +431,9 @@ __all__ = [
     "set_power_plan",
     "get_sleep_timeout",
     "set_sleep_timeout",
+    # TTS
+    "speak",
+    "get_voices",
     # Types (re-exported for convenience)
     "DesktopState",
     "Window",

@@ -30,7 +30,7 @@ def register_platform_tools(platform: str, module_names: list[str]):
 
 
 # Windows Modules
-windows_modules = ["system", "hardware", "ui", "apps"]
+windows_modules = ["system", "hardware", "ui", "apps", "tts"]
 
 # Android Modules
 android_modules = ["system", "hardware", "interaction", "apps", "communication"]
