@@ -39,7 +39,7 @@ all = ["fastmcp>=2.0", "tabulate"]
 [project.scripts]
 system-mcp = "system_mcp.cli:main"
 system-mcp-server = "system_mcp.mcp_server:main"
-mitchell = "mitchell:main"
+mitchell = "mitchell:cli"
 
 [build-system]
 requires = ["setuptools>=61.0"]
