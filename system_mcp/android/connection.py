@@ -10,6 +10,8 @@ from system_mcp.core.errors import DeviceOffline, SystemMCPError
 
 import os
 import json
+import socket
+import struct
 
 _active_serial = None
 _u2_device = None
@@ -31,60 +33,101 @@ def _save_wifi_ip(ip: str):
     except:
         pass
 
+def _connect_tailscale(ts_host: str) -> Optional[str]:
+    """Connects to phone via Tailscale companion app over port 5000 to discover ADB port."""
+    try:
+        # First query companion app for adb port
+        sock = socket.create_connection((ts_host, 5000), timeout=5)
+        # Send get_adb_port frame
+        req = json.dumps({"action": "get_adb_port"}).encode('utf-8')
+        sock.sendall(struct.pack('>I', len(req)) + req)
+        
+        # Read response
+        length_bytes = sock.recv(4)
+        if not length_bytes or len(length_bytes) != 4:
+            return None
+        length = struct.unpack('>I', length_bytes)[0]
+        resp_bytes = sock.recv(length)
+        resp = json.loads(resp_bytes.decode('utf-8'))
+        
+        port = resp.get("port", -1)
+        if port <= 0:
+            return None
+            
+        target = f"{ts_host}:{port}"
+        connect_res = subprocess.run(["adb", "connect", target], capture_output=True, text=True, timeout=10)
+        if "connected" in connect_res.stdout.lower() or "already" in connect_res.stdout.lower():
+            return target
+    except Exception as e:
+        pass
+    return None
+
 def get_active_serial() -> str:
     """Returns the serial of the active connected device, or raises DeviceOffline."""
     global _active_serial
     if _active_serial:
-        return _active_serial
+        # Liveness check
+        res = subprocess.run(["adb", "-s", _active_serial, "get-state"], capture_output=True, text=True)
+        if "device" in res.stdout:
+            return _active_serial
+        else:
+            _active_serial = None
+            
+    ts_host = os.environ.get("SYSTEM_MCP_TS_HOST")
+    if ts_host:
+        target = _connect_tailscale(ts_host)
+        if target:
+            _active_serial = target
+            
+    if not _active_serial:
+        result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
+        lines = result.stdout.strip().split("\n")[1:]
+        devices = [line.split("\t")[0] for line in lines if "device" in line and "offline" not in line]
         
-    result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
-    lines = result.stdout.strip().split("\n")[1:]
-    devices = [line.split("\t")[0] for line in lines if "device" in line and "offline" not in line]
-    
-    if not devices:
-        # Fallback to saved Wi-Fi IP
-        saved_ip = _get_saved_wifi_ip()
-        if saved_ip:
-            target = f"{saved_ip}:5555"
-            subprocess.run(["adb", "connect", target], capture_output=True)
-            
-            # Check again
-            result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
-            lines = result.stdout.strip().split("\n")[1:]
-            devices = [line.split("\t")[0] for line in lines if "device" in line and "offline" not in line]
-            
         if not devices:
-            raise DeviceOffline("No Android devices found or device is offline. Plug in via USB once to enable Auto-Wi-Fi, or check network.")
-            
-    _active_serial = devices[0]
-    
-    # Auto-Upgrade to Wi-Fi ADB if connected via USB
-    if ":" not in _active_serial and not _active_serial.startswith("emulator-"):
-        try:
-            # 1. Get device IP address
-            ip_res = subprocess.run(["adb", "-s", _active_serial, "shell", "ip", "route"], capture_output=True, text=True)
-            # Find the wlan0 IP (e.g. 192.168.1.55)
-            wifi_ip = None
-            for line in ip_res.stdout.split('\n'):
-                if 'wlan0' in line and 'src' in line:
-                    parts = line.split(' ')
-                    if 'src' in parts:
-                        wifi_ip = parts[parts.index('src') + 1]
-                        break
-            
-            if wifi_ip:
-                # 2. Enable TCP/IP on port 5555
-                subprocess.run(["adb", "-s", _active_serial, "tcpip", "5555"], capture_output=True, timeout=5)
+            # Fallback to saved Wi-Fi IP
+            saved_ip = _get_saved_wifi_ip()
+            if saved_ip:
+                target = f"{saved_ip}:5555"
+                subprocess.run(["adb", "connect", target], capture_output=True)
                 
-                # 3. Connect wirelessly
-                target = f"{wifi_ip}:5555"
-                connect_res = subprocess.run(["adb", "connect", target], capture_output=True, text=True, timeout=10)
+                # Check again
+                result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
+                lines = result.stdout.strip().split("\n")[1:]
+                devices = [line.split("\t")[0] for line in lines if "device" in line and "offline" not in line]
                 
-                if "connected" in connect_res.stdout.lower():
-                    _active_serial = target
-                    _save_wifi_ip(wifi_ip)
-        except Exception:
-            pass # Fail gracefully and continue using USB
+            if not devices:
+                raise DeviceOffline("No Android devices found or device is offline. Plug in via USB once to enable Auto-Wi-Fi, or check network.")
+                
+        _active_serial = devices[0]
+        
+        # Auto-Upgrade to Wi-Fi ADB if connected via USB
+        if ":" not in _active_serial and not _active_serial.startswith("emulator-"):
+            try:
+                # 1. Get device IP address
+                ip_res = subprocess.run(["adb", "-s", _active_serial, "shell", "ip", "route"], capture_output=True, text=True)
+                # Find the wlan0 IP (e.g. 192.168.1.55)
+                wifi_ip = None
+                for line in ip_res.stdout.split('\n'):
+                    if 'wlan0' in line and 'src' in line:
+                        parts = line.split(' ')
+                        if 'src' in parts:
+                            wifi_ip = parts[parts.index('src') + 1]
+                            break
+                
+                if wifi_ip:
+                    # 2. Enable TCP/IP on port 5555
+                    subprocess.run(["adb", "-s", _active_serial, "tcpip", "5555"], capture_output=True, timeout=5)
+                    
+                    # 3. Connect wirelessly
+                    target = f"{wifi_ip}:5555"
+                    connect_res = subprocess.run(["adb", "connect", target], capture_output=True, text=True, timeout=10)
+                    
+                    if "connected" in connect_res.stdout.lower():
+                        _active_serial = target
+                        _save_wifi_ip(wifi_ip)
+            except Exception:
+                pass # Fail gracefully and continue using USB
     
     # Auto-forward Companion APK socket port
     try:

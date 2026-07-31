@@ -42,33 +42,53 @@ object AdbManager {
     }
 
     fun executeShellCommand(command: String): String {
-        Log.i(TAG, "Parsing God-Mode command: $command")
+        Log.i(TAG, "Executing command: $command")
         
         val service = MCPAccessibilityService.instance
-            ?: return "Error: MCPAccessibilityService is not active. Please enable Mitchell AI in Android Accessibility Settings."
             
         try {
-            // Very basic command parsing for common ADB commands
-            if (command.startsWith("input tap")) {
+            if (command.startsWith("input tap") && service != null) {
                 val parts = command.split(" ")
                 if (parts.size >= 4) {
                     val x = parts[2].toFloat()
                     val y = parts[3].toFloat()
-                    service.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME) // Placeholder for actual tap logic
-                    // Real tap would require dispatchGesture, but we'd need to add that to MCPAccessibilityService
+                    service.performTap(x, y)
                     return "Simulated tap at $x, $y via Accessibility"
                 }
-            } else if (command.startsWith("input swipe")) {
-                return "Simulated swipe via Accessibility"
-            } else if (command.startsWith("uiautomator dump")) {
-                // Actually dump the accessibility tree
+            } else if (command.startsWith("input swipe") && service != null) {
+                val parts = command.split(" ")
+                if (parts.size >= 6) {
+                    val x1 = parts[2].toFloat()
+                    val y1 = parts[3].toFloat()
+                    val x2 = parts[4].toFloat()
+                    val y2 = parts[5].toFloat()
+                    val duration = if (parts.size >= 7) parts[6].toLong() else 300L
+                    service.performSwipe(x1, y1, x2, y2, duration)
+                    return "Simulated swipe via Accessibility"
+                }
+            } else if (command.startsWith("uiautomator dump") && service != null) {
                 return "Accessibility Tree Dump:\n" + service.dumpAccessibilityTree().toString()
             }
             
-            return "Command '$command' cannot be executed via Accessibility yet. True local ADB protocol is pending implementation."
+            // For other commands, try to execute locally using Runtime
+            val process = Runtime.getRuntime().exec(command)
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val errorReader = BufferedReader(InputStreamReader(process.errorStream))
+            
+            val output = StringBuilder()
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                output.append(line).append("\n")
+            }
+            while (errorReader.readLine().also { line = it } != null) {
+                output.append(line).append("\n")
+            }
+            
+            process.waitFor()
+            return output.toString()
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error executing Accessibility command: $command", e)
+            Log.e(TAG, "Error executing command: $command", e)
             return "Exception: ${e.message}"
         }
     }

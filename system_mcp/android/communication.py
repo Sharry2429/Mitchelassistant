@@ -12,6 +12,7 @@ from system_mcp.core.errors import RoleDialerRequired
 from system_mcp.core.errors import DeviceOffline
 from system_mcp.core.errors import RequiresCompanionApp
 from system_mcp.core.audit import log_action
+from system_mcp.android.notification import get_active_notifications
 import urllib.parse
 
 from system_mcp.core.errors import PermissionDenied

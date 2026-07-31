@@ -41,6 +41,40 @@ class MitchellService : Service() {
     private var startTime: Long = 0
     private var totalRequests: Int = 0
 
+    private var nsdManager: android.net.nsd.NsdManager? = null
+    private var adbPort = -1
+    
+    private val discoveryListener = object : android.net.nsd.NsdManager.DiscoveryListener {
+        override fun onDiscoveryStarted(regType: String) {}
+        override fun onServiceFound(service: android.net.nsd.NsdServiceInfo) {
+            nsdManager?.resolveService(service, object : android.net.nsd.NsdManager.ResolveListener {
+                override fun onResolveFailed(serviceInfo: android.net.nsd.NsdServiceInfo, errorCode: Int) {}
+                override fun onServiceResolved(serviceInfo: android.net.nsd.NsdServiceInfo) {
+                    adbPort = serviceInfo.port
+                }
+            })
+        }
+        override fun onServiceLost(service: android.net.nsd.NsdServiceInfo) {}
+        override fun onDiscoveryStopped(serviceType: String) {}
+        override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {}
+        override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
+    }
+
+    private fun startNsdDiscovery() {
+        try {
+            nsdManager = getSystemService(Context.NSD_SERVICE) as android.net.nsd.NsdManager
+            nsdManager?.discoverServices("_adb-tls-connect._tcp", android.net.nsd.NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun stopNsdDiscovery() {
+        try {
+            nsdManager?.stopServiceDiscovery(discoveryListener)
+        } catch (e: Exception) {}
+    }
+
     companion object {
         @Volatile
         var instance: MitchellService? = null
@@ -110,6 +144,8 @@ class MitchellService : Service() {
         AudioPlaybackService.registerTools()
         MitchellInCallService.registerTools()
         MitchellVoiceInteractionSession.registerTools()
+        
+        startNsdDiscovery()
         
         wakeWordService = WakeWordService(this)
         
@@ -242,6 +278,7 @@ class MitchellService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isServerRunning = false
+        stopNsdDiscovery()
         serviceJob.cancel()
         relayClient?.disconnect()
         try {
@@ -284,7 +321,7 @@ class MitchellService : Service() {
         totalRequests = 0
         serviceScope.launch {
             try {
-                serverSocket = ServerSocket(5000, 50, InetAddress.getByName("127.0.0.1"))
+                serverSocket = ServerSocket(5000) // Binds to all interfaces to support Tailscale
                 while (isServerRunning) {
                     val clientSocket = serverSocket?.accept() ?: break
                     serviceScope.launch {
@@ -348,6 +385,11 @@ class MitchellService : Service() {
                     } else {
                         sendFrame(outputStream, ToolRegistry.errorResult("AUTH_FAILED", "Invalid authentication token").toString())
                     }
+                    continue
+                }
+
+                if (action == "get_adb_port") {
+                    sendFrame(outputStream, ToolRegistry.successResult(mapOf("port" to adbPort)).toString())
                     continue
                 }
 

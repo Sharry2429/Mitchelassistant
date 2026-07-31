@@ -14,7 +14,7 @@ from system_mcp.core.errors import DeviceOffline, TimeoutError as MCPTimeout, Sy
 _DEFAULT_TIMEOUT = 30
 
 
-def shell(command: str, *, timeout: int = _DEFAULT_TIMEOUT) -> str:
+def shell(command, *, timeout: int = _DEFAULT_TIMEOUT) -> str:
     """Run a shell command *on the Android device* and return stdout.
 
     Equivalent to ``adb -s <serial> shell <command>``.
@@ -29,9 +29,14 @@ def shell(command: str, *, timeout: int = _DEFAULT_TIMEOUT) -> str:
     except DeviceOffline:
         raise
 
+    if isinstance(command, str):
+        cmd_args = prefix + ["shell", command]
+    else:
+        cmd_args = prefix + ["shell"] + list(command)
+
     try:
         result = subprocess.run(
-            prefix + ["shell", command],
+            cmd_args,
             capture_output=True,
             text=True,
             timeout=timeout,

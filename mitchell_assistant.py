@@ -10,7 +10,8 @@ from mcp.client.session import ClientSession
 async def main():
     parser = argparse.ArgumentParser(description="Mitchell AI - Peak Assistant")
     parser.add_argument("--remote", action="store_true", help="Start in Remote Host mode (connects to relay server)")
-    parser.add_argument("--relay", type=str, default="ws://127.0.0.1:8765", help="Relay server WS URL")
+    parser.add_argument("--relay", type=str, default=os.environ.get("RELAY_URL", "ws://127.0.0.1:8765"), help="Relay server WS URL")
+    parser.add_argument("--query", type=str, help="Run a single command instead of interactive loop")
     args = parser.parse_args()
 
     api_key = os.environ.get("AICREDITS_API_KEY")
@@ -51,14 +52,19 @@ async def main():
             
             openai_tools = []
             for t in tools_response.tools:
-                openai_tools.append({
-                    "type": "function",
-                    "function": {
-                        "name": t.name,
-                        "description": t.description or "System-MCP action",
-                        "parameters": t.inputSchema
-                    }
-                })
+                # Filter to avoid OpenAI's 128 tool limit
+                if t.name.startswith("android_interaction") or t.name.startswith("android_apps") or t.name.startswith("android_communication") or t.name.startswith("android_system"):
+                    openai_tools.append({
+                        "type": "function",
+                        "function": {
+                            "name": t.name,
+                            "description": t.description or "System-MCP action",
+                            "parameters": t.inputSchema
+                        }
+                    })
+                    
+                if len(openai_tools) >= 120:
+                    break
                 
             print(f"Successfully loaded {len(openai_tools)} God-Mode tools.")
             print("Type 'exit' to quit.\n")
@@ -68,13 +74,18 @@ async def main():
                 "content": "You are Mitchell AI, a highly capable peak assistant with God-Mode access to the user's Android phone and Windows PC. You can place calls, send WhatsApp messages, control the screen, launch apps, and manage settings. Be concise and execute the user's requests."
             }]
             
+            if args.query:
+                print(f"You: {args.query}")
+                user_input = args.query
+                messages.append({"role": "user", "content": user_input})
+            
             while True:
                 try:
-                    user_input = input("You: ")
-                    if user_input.lower() in ['exit', 'quit']:
-                        break
-                        
-                    messages.append({"role": "user", "content": user_input})
+                    if not args.query:
+                        user_input = input("You: ")
+                        if user_input.lower() in ['exit', 'quit']:
+                            break
+                        messages.append({"role": "user", "content": user_input})
                     
                     while True:
                         response = await llm.chat.completions.create(
@@ -103,6 +114,8 @@ async def main():
                         
                         if not message.tool_calls:
                             print(f"\nMitchell: {message.content}\n")
+                            if args.query:
+                                return
                             break
                             
                         for tool_call in message.tool_calls:

@@ -14,19 +14,21 @@ dependencies = [
     "zeroconf>=0.132.0",
     
     # Windows Dependencies
-    "comtypes>=1.4.15",
+    "comtypes>=1.4.15; sys_platform == 'win32'",
     "fuzzywuzzy>=0.18.0",
     "python-levenshtein>=0.27.0",
     "markdownify>=1.1.0",
     "psutil>=7.0.0",
-    "pywin32>=310",
-    "pyvda>=0.6.0",
+    "pywin32>=310; sys_platform == 'win32'",
+    "pyvda>=0.6.0; sys_platform == 'win32'",
     
     # Shared Dependencies
     "pydantic>=2.0",
     "requests>=2.32.0",
     "websockets>=12.0",
     "cryptography>=41.0.0",
+    "openai",
+    "mcp",
 ]
 
 [project.optional-dependencies]
@@ -37,6 +39,7 @@ all = ["fastmcp>=2.0", "tabulate"]
 [project.scripts]
 system-mcp = "system_mcp.cli:main"
 system-mcp-server = "system_mcp.mcp_server:main"
+mitchell = "mitchell:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]

@@ -11,9 +11,9 @@ from mcp.client.stdio import stdio_client, StdioServerParameters
 from mcp.client.session import ClientSession
 
 class RemoteHostAgent:
-    def __init__(self, api_key: str, relay_url: str = "ws://127.0.0.1:8765"):
+    def __init__(self, api_key: str, relay_url: str = None):
         self.api_key = api_key
-        self.relay_url = relay_url
+        self.relay_url = relay_url or os.environ.get("RELAY_URL", "ws://127.0.0.1:8765")
         self.llm = AsyncOpenAI(api_key=api_key, base_url="https://api.aicredits.in/v1")
         self.key_path = os.path.expanduser("~/.system_mcp_remote_key_aes")
         self.pairing_key = self._load_or_generate_key()

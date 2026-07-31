@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  relay_server:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: system_mcp_relay
+    restart: always
+    ports:
+      - "8765:8765"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

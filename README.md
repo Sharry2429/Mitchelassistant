@@ -43,9 +43,11 @@ System-MCP is not just an automation tool; it is a fully-fledged Assistant (Mitc
    - Houses the `MitchellService.kt` (Notification listener, Accessibility), `MitchellInCallService.kt` (Telecom), and `MitchellVoiceInteractionService.kt` (Assistant).
    - UI built with modern glassmorphism design tokens (colors, shapes, typography).
 
-3. **MitchellCode / Custom Agent (`mitchell_assistant.py`)**
-   - A ready-to-use LLM agent client that wraps the System-MCP server.
-   - Connects to an LLM provider (e.g. `Aicredits.in`) to interpret user commands and autonomously trigger the 100+ System-MCP tools.
+3. **Mitchell CLI - Advanced AI Coding & God-Mode OS Assistant (`mitchell.py`)**
+   - An open-source, feature-complete alternative to **Claude Code** and **Google Antigravity CLI (`agy`)**.
+   - **Rich Terminal Interface (TUI)**: Powered by `rich` and `prompt_toolkit` with ASCII banners, markdown rendering, syntax-highlighted code diffs, and live status spinners.
+   - **Slash Commands**: `/help`, `/plan <task>`, `/goal <objective>`, `/tools`, `/compact`, `/model <name>`, `/remote [url]`, `/clear`, `/exit`.
+   - **Dual Engine**: Combines full workspace coding tools (`view_file`, `edit_file`, `write_file`, `list_dir`, `grep_search`, `run_command`) with 100+ God-Mode Windows & Android automation tools.
 
 ---
 

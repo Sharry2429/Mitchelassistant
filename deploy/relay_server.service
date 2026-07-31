@@ -1,0 +1,17 @@
+[Unit]
+Description=SystemMCP Relay Server Service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/systemmcp
+ExecStart=/usr/bin/python3 system_mcp/relay_server.py
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=systemmcp-relay
+
+[Install]
+WantedBy=multi-user.target

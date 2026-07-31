@@ -7,6 +7,8 @@ import android.content.Context
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.accessibilityservice.GestureDescription
+import android.graphics.Path
 
 class MCPAccessibilityService : AccessibilityService() {
 
@@ -95,6 +97,25 @@ class MCPAccessibilityService : AccessibilityService() {
         } catch (e: Exception) {
             false
         }
+    }
+
+    fun performTap(x: Float, y: Float): Boolean {
+        val path = Path()
+        path.moveTo(x, y)
+        val gestureBuilder = GestureDescription.Builder()
+        val strokeDescription = GestureDescription.StrokeDescription(path, 0, 50)
+        gestureBuilder.addStroke(strokeDescription)
+        return dispatchGesture(gestureBuilder.build(), null, null)
+    }
+
+    fun performSwipe(x1: Float, y1: Float, x2: Float, y2: Float, duration: Long): Boolean {
+        val path = Path()
+        path.moveTo(x1, y1)
+        path.lineTo(x2, y2)
+        val gestureBuilder = GestureDescription.Builder()
+        val strokeDescription = GestureDescription.StrokeDescription(path, 0, duration)
+        gestureBuilder.addStroke(strokeDescription)
+        return dispatchGesture(gestureBuilder.build(), null, null)
     }
 
     fun dumpAccessibilityTree(): Map<String, Any?>? {
