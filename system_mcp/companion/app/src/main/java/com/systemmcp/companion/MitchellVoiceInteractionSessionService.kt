@@ -102,10 +102,9 @@ fun AssistantOverlayUI(onClose: () -> Unit) {
     var query by remember { mutableStateOf("") }
     
     // Dynamic routing states
-    val isPcLinked = remember { MitchellService.isRelayConnected() }
-    val subtitleText = if (isPcLinked) "PC Link Active (Thin Client)" else "Standalone LLM Active"
-    val placeholderText = if (isPcLinked) "Ask PC Mitchell..." else "Ask Standalone Mitchell..."
-    val indicatorColor = if (isPcLinked) Color(0xFF34D399) else Color(0xFF60A5FA)
+    val subtitleText = "Standalone LLM Active"
+    val placeholderText = "Ask Mitchell..."
+    val indicatorColor = Color(0xFF60A5FA)
 
     var responseText by remember { mutableStateOf(subtitleText) }
     val router = remember { MitchellRouter(context) }

@@ -95,15 +95,7 @@ class MitchellService : Service() {
         fun getActiveToken(): String? = instance?.authToken
         fun getConnectedClientsCount(): Int = instance?.activeClients?.size ?: 0
         fun getTotalRequests(): Int = instance?.totalRequests ?: 0
-        
-        fun isRelayConnected(): Boolean {
-            return instance?.relayClient?.isConnected == true
-        }
 
-        fun sendRemoteQuery(query: String) {
-            instance?.relayClient?.sendQuery(query)
-        }
-        
         fun getUptimeMillis(): Long {
             val inst = instance ?: return 0
             return if (inst.isServerRunning) System.currentTimeMillis() - inst.startTime else 0
@@ -130,15 +122,11 @@ class MitchellService : Service() {
     }
 
     private var wakeWordService: WakeWordService? = null
-    private var relayClient: RelayClient? = null
     private var discovery: MitchellDiscovery? = null
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        // Hardcode a default relay for testing. In production, get this from preferences.
-        relayClient = RelayClient("ws://192.168.1.100:8765", "abcd123", "")
-        relayClient?.connect()
         registerBaseTools()
         OverlayService.registerTools()
         AudioStreamService.registerTools()
@@ -290,7 +278,6 @@ class MitchellService : Service() {
         discovery?.stopDiscovery()
         discovery?.unregisterService()
         serviceJob.cancel()
-        relayClient?.disconnect()
         try {
             serverSocket?.close()
         } catch (_: Exception) {}
