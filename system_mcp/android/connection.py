@@ -33,32 +33,19 @@ def _save_wifi_ip(ip: str):
     except:
         pass
 
-def _connect_tailscale(ts_host: str) -> Optional[str]:
-    """Connects to phone via Tailscale companion app over port 5000 to discover ADB port."""
+_TAILSCALE_HOST = os.environ.get("SYSTEM_MCP_TAILSCALE_HOST")
+_TAILSCALE_PORT = os.environ.get("SYSTEM_MCP_TAILSCALE_PORT", "5555")
+
+def _connect_tailscale() -> Optional[str]:
+    """Try connecting to the device over its Tailscale address, if configured."""
+    if not _TAILSCALE_HOST:
+        return None
+    target = f"{_TAILSCALE_HOST}:{_TAILSCALE_PORT}"
     try:
-        # First query companion app for adb port
-        sock = socket.create_connection((ts_host, 5000), timeout=5)
-        # Send get_adb_port frame
-        req = json.dumps({"action": "get_adb_port"}).encode('utf-8')
-        sock.sendall(struct.pack('>I', len(req)) + req)
-        
-        # Read response
-        length_bytes = sock.recv(4)
-        if not length_bytes or len(length_bytes) != 4:
-            return None
-        length = struct.unpack('>I', length_bytes)[0]
-        resp_bytes = sock.recv(length)
-        resp = json.loads(resp_bytes.decode('utf-8'))
-        
-        port = resp.get("port", -1)
-        if port <= 0:
-            return None
-            
-        target = f"{ts_host}:{port}"
-        connect_res = subprocess.run(["adb", "connect", target], capture_output=True, text=True, timeout=10)
-        if "connected" in connect_res.stdout.lower() or "already" in connect_res.stdout.lower():
+        result = subprocess.run(["adb", "connect", target], capture_output=True, text=True, timeout=10)
+        if "connected" in result.stdout.lower() or "already" in result.stdout.lower():
             return target
-    except Exception as e:
+    except Exception:
         pass
     return None
 
@@ -73,17 +60,18 @@ def get_active_serial() -> str:
         else:
             _active_serial = None
             
-    ts_host = os.environ.get("SYSTEM_MCP_TS_HOST")
-    if ts_host:
-        target = _connect_tailscale(ts_host)
-        if target:
-            _active_serial = target
-            
     if not _active_serial:
         result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
         lines = result.stdout.strip().split("\n")[1:]
         devices = [line.split("\t")[0] for line in lines if "device" in line and "offline" not in line]
         
+        if not devices:
+            ts_target = _connect_tailscale()
+            if ts_target:
+                result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
+                lines = result.stdout.strip().split("\n")[1:]
+                devices = [line.split("\t")[0] for line in lines if "device" in line and "offline" not in line]
+
         if not devices:
             # Fallback to saved Wi-Fi IP
             saved_ip = _get_saved_wifi_ip()

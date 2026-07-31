@@ -52,16 +52,24 @@ adb shell settings put secure enabled_accessibility_services com.systemmcp.compa
 ```
 
 ### D. Start the Service
-Boot the TCP Socket Server in the background. We pass a `token` via the intent so the Python script can authenticate later.
+You can start the background service via the UI in `MainActivity`, which also has a toggle to enable/disable auto-start on boot. Alternatively, start it via ADB:
 
 ```bash
-adb shell am start-foreground-service -a android.intent.action.MAIN -n com.systemmcp.companion/.CompanionService --es token "system_mcp_secret"
+adb shell am start-foreground-service -a android.intent.action.MAIN -n com.systemmcp.companion/.MitchellService --es token "system_mcp_secret"
 ```
 
-*You should now see a silent "System MCP - Background service active" notification on your phone!*
+*You should now see a silent "Mitchell AI Active" notification on your phone!*
 
 ## 4. The "USB-Once" Wireless Flow
 
 Once the companion app is running and the permissions are granted, you can unplug the USB cable!
 
-The `BootReceiver.kt` inside the Companion app will automatically force `adb_wifi_enabled = 1` every time the phone boots up. The `device_registry.py` module in Python listens for the Android mDNS broadcasts and will automatically route commands to the device's current IP address over the network.
+The `BootReceiver.kt` inside the Companion app will automatically force `adb_wifi_enabled = 1` every time the phone boots up (if the app is enabled in MainActivity). `MitchellDiscovery` will advertise the service over mDNS, so `device_registry.py` can automatically find and connect to the device over the network without manual `adb forward`.
+
+## 5. Remote access via Tailscale (optional)
+
+If the device is not on the same LAN, you can connect over Tailscale by setting the following environment variables on the host:
+- `SYSTEM_MCP_TAILSCALE_HOST`: The Tailscale IP or hostname of the Android device.
+- `SYSTEM_MCP_TAILSCALE_PORT`: The ADB TCP port (defaults to `5555`).
+
+System-MCP will automatically try this Tailscale connection if no USB devices are found.

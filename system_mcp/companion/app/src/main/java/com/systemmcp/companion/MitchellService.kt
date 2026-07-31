@@ -131,6 +131,7 @@ class MitchellService : Service() {
 
     private var wakeWordService: WakeWordService? = null
     private var relayClient: RelayClient? = null
+    private var discovery: MitchellDiscovery? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -142,7 +143,7 @@ class MitchellService : Service() {
         OverlayService.registerTools()
         AudioStreamService.registerTools()
         AudioPlaybackService.registerTools()
-        MitchellInCallService.registerTools()
+        MitchellInCallService.registerTools(applicationContext)
         MitchellVoiceInteractionSession.registerTools()
         
         startNsdDiscovery()
@@ -205,12 +206,12 @@ class MitchellService : Service() {
                     else -> false
                 }
                 if (success) {
-                    ToolRegistry.successResult(mapOf("message" to "Setting '\$key' written successfully to \$type"))
+                    ToolRegistry.successResult(mapOf("message" to "Setting '$key' written successfully to $type"))
                 } else {
-                    ToolRegistry.errorResult("SETTING_FAILED", "Failed to write setting '\$key' to \$type")
+                    ToolRegistry.errorResult("SETTING_FAILED", "Failed to write setting '$key' to $type")
                 }
             } catch (e: SecurityException) {
-                ToolRegistry.errorResult("SECURITY_EXCEPTION", "WRITE_SECURE_SETTINGS permission required: \${e.message}")
+                ToolRegistry.errorResult("SECURITY_EXCEPTION", "WRITE_SECURE_SETTINGS permission required: ${e.message}")
             }
         }
 
@@ -266,6 +267,13 @@ class MitchellService : Service() {
         authToken = tokenFromIntent
         startForegroundNotification()
 
+        if (discovery == null) {
+            discovery = MitchellDiscovery(applicationContext).also {
+                it.startDiscovery()
+                it.registerService(5000)
+            }
+        }
+
         if (!isServerRunning) {
             isServerRunning = true
             startSocketServer()
@@ -279,6 +287,8 @@ class MitchellService : Service() {
         super.onDestroy()
         isServerRunning = false
         stopNsdDiscovery()
+        discovery?.stopDiscovery()
+        discovery?.unregisterService()
         serviceJob.cancel()
         relayClient?.disconnect()
         try {

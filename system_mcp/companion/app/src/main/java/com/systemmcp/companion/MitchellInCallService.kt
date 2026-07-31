@@ -9,8 +9,17 @@ class MitchellInCallService : InCallService() {
     companion object {
         val activeCalls = ConcurrentHashMap<String, Call>()
 
-        fun registerTools() {
+        private fun requireDialerRole(context: android.content.Context) {
+            val roleManager = context.getSystemService(android.content.Context.ROLE_SERVICE) as android.app.role.RoleManager
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q &&
+                !roleManager.isRoleHeld(android.app.role.RoleManager.ROLE_DIALER)) {
+                throw Exception("RoleDialerRequired")
+            }
+        }
+
+        fun registerTools(context: android.content.Context) {
             ToolRegistry.register("call_answer") { root ->
+                requireDialerRole(context)
                 val callId = if (root.has("call_id") && !root.get("call_id").isJsonNull) root.get("call_id").asString else activeCalls.keys.firstOrNull() ?: throw Exception("No active call")
                 val call = activeCalls[callId] ?: throw Exception("Call not found")
                 call.answer(0) // VideoProfile.STATE_AUDIO_ONLY = 0
@@ -18,6 +27,7 @@ class MitchellInCallService : InCallService() {
             }
 
             ToolRegistry.register("call_reject") { root ->
+                requireDialerRole(context)
                 val callId = if (root.has("call_id") && !root.get("call_id").isJsonNull) root.get("call_id").asString else activeCalls.keys.firstOrNull() ?: throw Exception("No active call")
                 val call = activeCalls[callId] ?: throw Exception("Call not found")
                 call.reject(false, null)
@@ -25,10 +35,31 @@ class MitchellInCallService : InCallService() {
             }
 
             ToolRegistry.register("call_hangup") { root ->
+                requireDialerRole(context)
                 val callId = if (root.has("call_id") && !root.get("call_id").isJsonNull) root.get("call_id").asString else activeCalls.keys.firstOrNull() ?: throw Exception("No active call")
                 val call = activeCalls[callId] ?: throw Exception("Call not found")
                 call.disconnect()
                 ToolRegistry.successResult(mapOf("message" to "Call disconnected"))
+            }
+
+            ToolRegistry.register("call_state") {
+                val callId = activeCalls.keys.firstOrNull()
+                val call = callId?.let { activeCalls[it] }
+                if (call == null) {
+                    ToolRegistry.successResult(mapOf("state" to "IDLE", "number" to null))
+                } else {
+                    val stateName = when (call.state) {
+                        Call.STATE_RINGING -> "RINGING"
+                        Call.STATE_ACTIVE -> "ACTIVE"
+                        Call.STATE_DIALING -> "DIALING"
+                        Call.STATE_DISCONNECTED -> "DISCONNECTED"
+                        Call.STATE_HOLDING -> "HOLDING"
+                        Call.STATE_NEW -> "NEW"
+                        else -> "UNKNOWN"
+                    }
+                    val number = call.details.handle?.schemeSpecificPart
+                    ToolRegistry.successResult(mapOf("state" to stateName, "number" to number))
+                }
             }
         }
     }

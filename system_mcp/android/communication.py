@@ -41,11 +41,7 @@ def answer_call() -> MCPResult:
         require_enabled('phone', 'answer_call')
         bridge = require_companion()
         resp = bridge.execute('call_answer')
-        if isinstance(resp, dict) and resp.get('error') == 'RoleDialerRequired':
-            raise RoleDialerRequired('Mitchell AI must be the default dialer to answer calls.')
         return MCPResult.success(resp)
-    except RoleDialerRequired:
-        raise
     except Exception as e:
         if 'RoleDialerRequired' in str(e):
             raise RoleDialerRequired('Mitchell AI must be the default dialer to answer calls.')
@@ -57,11 +53,7 @@ def reject_call() -> MCPResult:
         require_enabled('phone', 'reject_call')
         bridge = require_companion()
         resp = bridge.execute('call_reject')
-        if isinstance(resp, dict) and resp.get('error') == 'RoleDialerRequired':
-            raise RoleDialerRequired('Mitchell AI must be the default dialer to reject calls.')
         return MCPResult.success(resp)
-    except RoleDialerRequired:
-        raise
     except Exception as e:
         if 'RoleDialerRequired' in str(e):
             raise RoleDialerRequired('Mitchell AI must be the default dialer to reject calls.')
@@ -73,11 +65,7 @@ def hang_up() -> MCPResult:
         require_enabled('phone', 'hang_up')
         bridge = require_companion()
         resp = bridge.execute('call_hangup')
-        if isinstance(resp, dict) and resp.get('error') == 'RoleDialerRequired':
-            raise RoleDialerRequired('Mitchell AI must be the default dialer to hang up calls.')
         return MCPResult.success(resp)
-    except RoleDialerRequired:
-        raise
     except Exception as e:
         if 'RoleDialerRequired' in str(e):
             raise RoleDialerRequired('Mitchell AI must be the default dialer to hang up calls.')
