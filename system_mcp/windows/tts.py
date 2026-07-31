@@ -11,9 +11,9 @@ from system_mcp.core.result import MCPResult
 # Lazy-loaded globals
 _kokoro_instance = None
 _tts_dir = os.path.expanduser("~/.system_mcp/tts")
-_model_url = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx"
+_model_url = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.int8.onnx"
 _voices_url = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
-_model_path = os.path.join(_tts_dir, "kokoro-v1.0.onnx")
+_model_path = os.path.join(_tts_dir, "kokoro-v1.0.int8.onnx")
 _voices_path = os.path.join(_tts_dir, "voices-v1.0.bin")
 
 
