@@ -127,11 +127,7 @@ def get_active_serial() -> str:
             except Exception:
                 pass # Fail gracefully and continue using USB
     
-    # Auto-forward Companion APK socket port
-    try:
-        subprocess.run(["adb", "-s", _active_serial, "forward", "tcp:5000", "tcp:5000"], capture_output=True, timeout=2)
-    except Exception:
-        pass
+    # Removed companion port forwarding
         
     return _active_serial
 

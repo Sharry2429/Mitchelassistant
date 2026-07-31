@@ -487,7 +487,8 @@ def press_key(key: str) -> None:
     time.sleep(0.01)
     key_up(key)
 
-def hotkey(*keys: str) -> None:
+def hotkey(keys: list[str]) -> None:
+    """Presses a combination of keys (e.g. ['ctrl', 'c'])."""
     for k in keys:
         key_down(k)
         time.sleep(0.01)

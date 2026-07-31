@@ -3,14 +3,12 @@ from typing import Optional
 from typing import Dict
 from typing import Any
 from system_mcp.android import adb
-from system_mcp.android.base import require_companion
 from system_mcp.android.base import confirm_destructive
 from system_mcp.android.base import require_enabled
 from system_mcp.core.result import MCPResult
 from system_mcp.core.errors import SystemMCPError
 from system_mcp.core.errors import RoleDialerRequired
 from system_mcp.core.errors import DeviceOffline
-from system_mcp.core.errors import RequiresCompanionApp
 from system_mcp.core.audit import log_action
 from system_mcp.android.notification import get_active_notifications
 import urllib.parse
@@ -35,50 +33,7 @@ def open_dialer(number: str='') -> MCPResult:
     except Exception as e:
         return MCPResult.fail(str(e))
 
-def answer_call() -> MCPResult:
-    """Answer an incoming phone call."""
-    try:
-        require_enabled('phone', 'answer_call')
-        bridge = require_companion()
-        resp = bridge.execute('call_answer')
-        return MCPResult.success(resp)
-    except Exception as e:
-        if 'RoleDialerRequired' in str(e):
-            raise RoleDialerRequired('Mitchell AI must be the default dialer to answer calls.')
-        return MCPResult.fail(str(e))
-
-def reject_call() -> MCPResult:
-    """Reject an incoming phone call."""
-    try:
-        require_enabled('phone', 'reject_call')
-        bridge = require_companion()
-        resp = bridge.execute('call_reject')
-        return MCPResult.success(resp)
-    except Exception as e:
-        if 'RoleDialerRequired' in str(e):
-            raise RoleDialerRequired('Mitchell AI must be the default dialer to reject calls.')
-        return MCPResult.fail(str(e))
-
-def hang_up() -> MCPResult:
-    """Hang up an active phone call."""
-    try:
-        require_enabled('phone', 'hang_up')
-        bridge = require_companion()
-        resp = bridge.execute('call_hangup')
-        return MCPResult.success(resp)
-    except Exception as e:
-        if 'RoleDialerRequired' in str(e):
-            raise RoleDialerRequired('Mitchell AI must be the default dialer to hang up calls.')
-        return MCPResult.fail(str(e))
-
-def get_call_state() -> MCPResult:
-    """Get the current phone call state (IDLE, RINGING, ACTIVE, DIALING, DISCONNECTED)."""
-    try:
-        bridge = require_companion()
-        resp = bridge.execute('call_state')
-        return MCPResult.success({'state': resp.get('state', 'IDLE'), 'number': resp.get('number')})
-    except Exception as e:
-        return MCPResult.fail(str(e))
+# Companion call tools removed
 
 def get_call_history(limit: int=50) -> MCPResult:
     """Get recent call history. Requires READ_CALL_LOG permission."""
@@ -294,17 +249,4 @@ def delete_event(event_id: str):
         return MCPResult.success(data)
     except Exception as e:
         return MCPResult.fail(str(e))
-"\nAndroid notification operations.\nRoutes through the Companion APK's NotificationListenerService.\n\nNote: start_stream/stop_stream are programmatic-only APIs (not exposed via MCP)\nbecause they require a Python callback. The MCP-facing function is `enable_stream`.\n"
-
-def enable_stream(enable: bool=True) -> MCPResult:
-    """Enables or disables real-time notification streaming on the companion app.
-    
-    Returns: dict with 'streaming' (bool) and 'listenerConnected' (bool).
-    """
-    log_action('notification', 'enable_stream', {'enable': enable}, {})
-    try:
-        bridge = require_companion()
-        resp = bridge.execute('stream_notifications', enable=enable)
-        return MCPResult.success({'streaming': resp.get('streaming', False), 'listenerConnected': resp.get('listenerConnected', False)})
-    except Exception as e:
-        return MCPResult.fail(str(e))
+# Notification stream tool removed

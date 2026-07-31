@@ -1,7 +1,6 @@
 from system_mcp.core.errors import SystemMCPError
 from system_mcp.core.errors import PermissionDenied
 from system_mcp.core.errors import DeviceOffline
-from system_mcp.core.errors import RequiresCompanionApp
 from system_mcp.core.audit import log_action
 from system_mcp.android import adb
 from system_mcp.core.result import MCPResult
@@ -131,12 +130,25 @@ if __name__ == '__main__':
 def grab_frame():
     """Grabs a single frame from the device screen using adb screencap."""
     try:
+        from system_mcp.android.connection import get_adb_prefix
+        prefix = get_adb_prefix()
         log_action('screen_stream', 'grab_frame', {}, {})
-        result = adb.run(['exec-out', 'screencap', '-p'])
-        output = result.stdout if hasattr(result, 'stdout') else result
+        
+        result = subprocess.run(
+            prefix + ['exec-out', 'screencap', '-p'],
+            capture_output=True,
+            timeout=60
+        )
+        if result.returncode != 0:
+            return MCPResult.fail(f"screencap failed: {result.stderr.decode('utf-8', errors='ignore')}")
+            
+        output = result.stdout
         if not output:
             return MCPResult.fail('No output received from screen capture')
-        img = Image.open(io.BytesIO(output if isinstance(output, bytes) else output.encode('latin1')))
+            
+        img = Image.open(io.BytesIO(output))
         return MCPResult.success(img)
+    except subprocess.TimeoutExpired:
+        return MCPResult.fail('Failed to grab frame: ADB command timed out after 60s')
     except Exception as e:
         return MCPResult.fail(f'Failed to grab frame: {e}')

@@ -6,9 +6,7 @@ from system_mcp.android import adb
 from system_mcp.android.base import confirm_destructive
 import subprocess
 from system_mcp.core.errors import DeviceOffline
-from system_mcp.core.errors import RequiresCompanionApp
 from system_mcp.android.connection import get_adb_prefix
-from system_mcp.android.base import require_companion
 from typing import List
 '\nAndroid power management via ADB.\n'
 
@@ -257,14 +255,10 @@ def get_setting(namespace: str, key: str) -> MCPResult:
         return MCPResult.fail(str(e))
 
 def set_setting(namespace: str, key: str, value: str) -> MCPResult:
-    """Sets an Android setting via the Companion APK's WRITE_SECURE_SETTINGS permission.
-    
-    The Kotlin CompanionService expects 'type' (not 'namespace') for the setting category.
-    """
+    """Sets an Android setting via ADB."""
     log_action('settings', 'set_setting', {'namespace': namespace, 'key': key, 'value': value}, {})
     try:
-        bridge = require_companion()
-        bridge.write_setting(setting_type=namespace, key=key, value=value)
+        adb.shell(['settings', 'put', namespace, key, value])
         return MCPResult.success(None)
     except Exception as e:
         return MCPResult.fail(str(e))

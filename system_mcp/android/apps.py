@@ -4,7 +4,6 @@ from system_mcp.core.audit import log_action
 from system_mcp.android.base import confirm_destructive
 from system_mcp.android.connection import get_u2_device
 from system_mcp.core.result import MCPResult
-from system_mcp.android.base import require_companion
 from system_mcp.core.errors import PermissionDenied
 from system_mcp.android import adb
 
@@ -87,19 +86,6 @@ def get_ui_tree() -> MCPResult:
     except SystemMCPError as e:
         return MCPResult.fail(str(e))
 
-def get_accessibility_tree() -> MCPResult:
-    """Returns a rich accessibility tree captured by the Companion Service.
-    
-    This tree includes bounding boxes, clickability, and nested structures directly 
-    from the Android Accessibility Service, making it superior to uiautomator2 for vision tasks.
-    """
-    log_action('desktop', 'get_accessibility_tree', {}, {})
-    try:
-        bridge = require_companion()
-        return MCPResult.success(bridge.get_accessibility_tree())
-    except SystemMCPError as e:
-        return MCPResult.fail(str(e))
-
 def wait_for_element(selector: str, timeout: float=10.0) -> MCPResult:
     log_action('desktop', 'wait_for_element', {'timeout': timeout, 'selector': selector}, {})
     try:
@@ -174,21 +160,5 @@ def delete(path: str, confirm: bool=False) -> MCPResult:
         if 'Permission denied' in result.stderr:
             return MCPResult.fail(result.stderr)
         return MCPResult.success(result.stdout)
-    except SystemMCPError as e:
-        return MCPResult.fail(str(e))
-'\nAndroid Companion APK Control.\nAllows explicitly checking the status of the Mitchell AI Companion Bridge.\n'
-
-def check_connection() -> MCPResult:
-    """Verifies the connection to the Android Companion APK socket server.
-    
-    This command connects to the companion service via ADB port forwarding (tcp:5000)
-    and performs a handshake. Use this to verify if the companion is alive before relying
-    on its tools (like get_accessibility_tree or stream_notifications).
-    """
-    log_action('companion', 'check_connection', {}, {})
-    try:
-        bridge = require_companion()
-        bridge.get_clipboard()
-        return MCPResult.success({'status': 'connected', 'message': 'Companion APK is alive and authenticated.'})
     except SystemMCPError as e:
         return MCPResult.fail(str(e))

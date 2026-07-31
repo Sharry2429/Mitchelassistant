@@ -7,6 +7,10 @@ class SystemMCPError(Exception):
     """Base exception for all System-MCP errors."""
     pass
 
+class ADBCommandError(SystemMCPError):
+    """Raised when an ADB command fails."""
+    pass
+
 class RoleDialerRequired(SystemMCPError):
     """Raised when an operation requires Mitchell AI to be the default dialer."""
     pass
@@ -15,13 +19,7 @@ class PermissionDenied(SystemMCPError):
     """Raised when an operation is blocked by OS permissions (e.g. unrooted device)."""
     pass
 
-class RequiresCompanionApp(SystemMCPError):
-    """Raised when a feature needs the Companion APK but it isn't installed/active."""
-    pass
-
-class RequiresCompanionUpdate(SystemMCPError):
-    """Raised when the Companion APK version doesn't match the Python library."""
-    pass
+# Companion exceptions removed
 
 class DeviceOffline(SystemMCPError):
     """Raised when the device is not reachable (USB disconnected / Wireless dropped)."""
