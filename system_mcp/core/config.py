@@ -2,9 +2,10 @@
 system_mcp.core.config
 Central configuration for System-MCP.
 """
+
 from dataclasses import dataclass
-from typing import Optional
 import os
+
 
 @dataclass
 class SystemMCPConfig:
@@ -16,7 +17,7 @@ class SystemMCPConfig:
     # Android specific
     reconnect_on_failure: bool = True
     use_scrcpy: bool = False
-    
+
     @classmethod
     def from_env(cls) -> "SystemMCPConfig":
         def _get_bool(name: str, default: bool) -> bool:
@@ -24,11 +25,11 @@ class SystemMCPConfig:
             if val is not None:
                 return val.lower() not in ("0", "false", "no")
             return default
-            
+
         def _get_float(name: str, default: float) -> float:
             val = os.environ.get(name)
             return float(val) if val is not None else default
-            
+
         def _get_int(name: str, default: int) -> int:
             val = os.environ.get(name)
             return int(val) if val is not None else default
@@ -38,15 +39,20 @@ class SystemMCPConfig:
             action_timeout=_get_float("SYSTEM_MCP_ACTION_TIMEOUT", 10.0),
             retry_attempts=_get_int("SYSTEM_MCP_RETRY_ATTEMPTS", 2),
             retry_delay=_get_float("SYSTEM_MCP_RETRY_DELAY", 0.5),
-            screenshot_dir=os.environ.get("SYSTEM_MCP_SCREENSHOT_DIR", "/tmp/system-mcp/screenshots"),
+            screenshot_dir=os.environ.get(
+                "SYSTEM_MCP_SCREENSHOT_DIR", "/tmp/system-mcp/screenshots"
+            ),
             reconnect_on_failure=_get_bool("SYSTEM_MCP_RECONNECT", True),
-            use_scrcpy=_get_bool("SYSTEM_MCP_USE_SCRCPY", False)
+            use_scrcpy=_get_bool("SYSTEM_MCP_USE_SCRCPY", False),
         )
+
 
 _global_config = SystemMCPConfig.from_env()
 
+
 def get_config() -> SystemMCPConfig:
     return _global_config
+
 
 def configure(**kwargs):
     global _global_config

@@ -83,11 +83,11 @@ def set_foreground_window(hwnd: int) -> bool:
     """Bring window to foreground."""
     # AllowSetForegroundWindow trick
     user32.AllowSetForegroundWindow(ctypes.wintypes.DWORD(-1))
-    
+
     if is_iconic(hwnd):
         SW_RESTORE = 9
         user32.ShowWindow(hwnd, SW_RESTORE)
-    
+
     return bool(user32.SetForegroundWindow(hwnd))
 
 
@@ -117,10 +117,11 @@ def get_class_name(hwnd: int) -> str:
 
 def send_keys(text: str) -> None:
     """Send keystrokes using SendInput with Unicode events.
-    
+
     This handles plain text. For special keys, use the input module.
     """
     from system_mcp.windows.ui import type_text
+
     type_text(text)
 
 
@@ -298,7 +299,9 @@ def find_element_by_automation_id(automation_id: str, root: Any = None) -> Any:
         element = root.FindFirst(4, condition)  # TreeScope_Descendants = 4
         return element
     except Exception as e:
-        logger.warning(f"Failed to find element by automation ID '{automation_id}': {e}")
+        logger.warning(
+            f"Failed to find element by automation ID '{automation_id}': {e}"
+        )
         return None
 
 
@@ -306,7 +309,9 @@ def enumerate_windows() -> list[int]:
     """Enumerate all top-level windows and return their handles."""
     handles: list[int] = []
 
-    @ctypes.WINFUNCTYPE(ctypes.wintypes.BOOL, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM)
+    @ctypes.WINFUNCTYPE(
+        ctypes.wintypes.BOOL, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM
+    )
     def enum_callback(hwnd, lparam):
         handles.append(hwnd)
         return True
@@ -319,7 +324,9 @@ def enumerate_child_windows(parent_hwnd: int) -> list[int]:
     """Enumerate child windows of a parent window."""
     handles: list[int] = []
 
-    @ctypes.WINFUNCTYPE(ctypes.wintypes.BOOL, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM)
+    @ctypes.WINFUNCTYPE(
+        ctypes.wintypes.BOOL, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM
+    )
     def enum_callback(hwnd, lparam):
         handles.append(hwnd)
         return True

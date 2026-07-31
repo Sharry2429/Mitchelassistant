@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 __all__ = [
     "get_current_desktop",
@@ -16,6 +15,7 @@ __all__ = [
 
 logger = logging.getLogger("wincontrol.core.vdm")
 
+
 def get_current_desktop() -> dict[str, str]:
     """Get the current virtual desktop info.
 
@@ -24,14 +24,16 @@ def get_current_desktop() -> dict[str, str]:
     """
     try:
         from pyvda import VirtualDesktop
+
         desktop = VirtualDesktop.current()
         return {
             "id": str(desktop.id),
-            "name": desktop.name if desktop.name else f"Desktop {desktop.number}"
+            "name": desktop.name if desktop.name else f"Desktop {desktop.number}",
         }
     except Exception as e:
         logger.warning(f"Failed to get current desktop via pyvda: {e}")
         return {"id": "00000000-0000-0000-0000-000000000000", "name": "Desktop 1"}
+
 
 def get_all_desktops() -> list[dict[str, str]]:
     """Get all virtual desktops.
@@ -41,17 +43,16 @@ def get_all_desktops() -> list[dict[str, str]]:
     """
     try:
         from pyvda import get_virtual_desktops
+
         desktops = get_virtual_desktops()
         return [
-            {
-                "id": str(d.id),
-                "name": d.name if d.name else f"Desktop {d.number}"
-            }
+            {"id": str(d.id), "name": d.name if d.name else f"Desktop {d.number}"}
             for d in desktops
         ]
     except Exception as e:
         logger.warning(f"Failed to get all desktops via pyvda: {e}")
         return [get_current_desktop()]
+
 
 def get_desktop_count() -> int:
     """Get the number of virtual desktops.
@@ -61,9 +62,11 @@ def get_desktop_count() -> int:
     """
     try:
         from pyvda import get_virtual_desktops
+
         return len(get_virtual_desktops())
     except Exception:
         return 1
+
 
 def is_window_on_current_desktop(hwnd: int) -> bool:
     """Check if a window is on the current virtual desktop.
@@ -76,11 +79,13 @@ def is_window_on_current_desktop(hwnd: int) -> bool:
     """
     try:
         from pyvda import AppView, VirtualDesktop
+
         app = AppView(hwnd)
         return app.desktop_id == VirtualDesktop.current().id
     except Exception as e:
         logger.warning(f"Failed to check window desktop: {e}")
         return True
+
 
 def switch_desktop(index: int) -> bool:
     """Switch to a virtual desktop by index (0-based).
@@ -93,6 +98,7 @@ def switch_desktop(index: int) -> bool:
     """
     try:
         from pyvda import get_virtual_desktops
+
         desktops = get_virtual_desktops()
         if 0 <= index < len(desktops):
             desktops[index].go()
@@ -101,6 +107,7 @@ def switch_desktop(index: int) -> bool:
     except Exception as e:
         logger.warning(f"Failed to switch desktop: {e}")
         return False
+
 
 def move_window_to_desktop(hwnd: int, desktop_index: int) -> bool:
     """Move a window to a specific virtual desktop.
@@ -114,6 +121,7 @@ def move_window_to_desktop(hwnd: int, desktop_index: int) -> bool:
     """
     try:
         from pyvda import AppView, get_virtual_desktops
+
         desktops = get_virtual_desktops()
         if 0 <= desktop_index < len(desktops):
             target_desktop = desktops[desktop_index]

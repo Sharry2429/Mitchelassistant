@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal
 
@@ -51,8 +50,10 @@ __all__ = [
 
 # ─── Enums ──────────────────────────────────────────────────────────────────
 
+
 class WindowStatus(str, Enum):
     """Window display state."""
+
     NORMAL = "normal"
     MINIMIZED = "minimized"
     MAXIMIZED = "maximized"
@@ -61,6 +62,7 @@ class WindowStatus(str, Enum):
 
 class ServiceStartType(str, Enum):
     """Windows service startup type."""
+
     AUTO = "auto"
     MANUAL = "manual"
     DISABLED = "disabled"
@@ -69,6 +71,7 @@ class ServiceStartType(str, Enum):
 
 class ServiceStatus(str, Enum):
     """Windows service runtime status."""
+
     RUNNING = "running"
     STOPPED = "stopped"
     PAUSED = "paused"
@@ -79,8 +82,10 @@ class ServiceStatus(str, Enum):
 
 # ─── Desktop & UI ───────────────────────────────────────────────────────────
 
+
 class BoundingBox(BaseModel):
     """Screen rectangle coordinates."""
+
     left: int = 0
     top: int = 0
     right: int = 0
@@ -100,6 +105,7 @@ class BoundingBox(BaseModel):
 
 class UIElement(BaseModel):
     """Interactive UI element on screen."""
+
     label: int = 0
     name: str = ""
     control_type: str = ""
@@ -114,6 +120,7 @@ class UIElement(BaseModel):
 
 class Window(BaseModel):
     """Window information."""
+
     handle: int = 0
     name: str = ""
     class_name: str = ""
@@ -126,6 +133,7 @@ class Window(BaseModel):
 
 class DisplayInfo(BaseModel):
     """Monitor/display information."""
+
     index: int = 0
     name: str = ""
     primary: bool = False
@@ -139,6 +147,7 @@ class DisplayInfo(BaseModel):
 
 class TreeState(BaseModel):
     """UI element tree state."""
+
     interactive_nodes: list[UIElement] = Field(default_factory=list)
     scrollable_nodes: list[UIElement] = Field(default_factory=list)
     root_name: str = "Desktop"
@@ -146,6 +155,7 @@ class TreeState(BaseModel):
 
 class ScreenshotResult(BaseModel):
     """Screenshot capture result."""
+
     width: int = 0
     height: int = 0
     scale: float = 1.0
@@ -158,6 +168,7 @@ class ScreenshotResult(BaseModel):
 
 class DesktopState(BaseModel):
     """Complete desktop state snapshot."""
+
     active_window: Window | None = None
     windows: list[Window] = Field(default_factory=list)
     cursor_position: tuple[int, int] = (0, 0)
@@ -171,8 +182,10 @@ class DesktopState(BaseModel):
 
 # ─── Process ────────────────────────────────────────────────────────────────
 
+
 class ProcessInfo(BaseModel):
     """Running process information."""
+
     pid: int = 0
     name: str = ""
     exe: str = ""
@@ -189,8 +202,10 @@ class ProcessInfo(BaseModel):
 
 # ─── Filesystem ─────────────────────────────────────────────────────────────
 
+
 class FileInfo(BaseModel):
     """File or directory metadata."""
+
     path: str = ""
     name: str = ""
     is_file: bool = True
@@ -208,6 +223,7 @@ class FileInfo(BaseModel):
 
 class DirectoryListing(BaseModel):
     """Directory listing result."""
+
     path: str = ""
     entries: list[FileInfo] = Field(default_factory=list)
     total_files: int = 0
@@ -217,8 +233,10 @@ class DirectoryListing(BaseModel):
 
 # ─── Registry ───────────────────────────────────────────────────────────────
 
+
 class RegistryValue(BaseModel):
     """Windows registry value."""
+
     name: str = ""
     data: Any = None
     type: str = ""
@@ -227,6 +245,7 @@ class RegistryValue(BaseModel):
 
 class RegistryKey(BaseModel):
     """Windows registry key with subkeys and values."""
+
     path: str = ""
     subkeys: list[str] = Field(default_factory=list)
     values: list[RegistryValue] = Field(default_factory=list)
@@ -234,8 +253,10 @@ class RegistryKey(BaseModel):
 
 # ─── Shell ──────────────────────────────────────────────────────────────────
 
+
 class CommandResult(BaseModel):
     """Shell command execution result."""
+
     stdout: str = ""
     stderr: str = ""
     exit_code: int = 0
@@ -246,8 +267,10 @@ class CommandResult(BaseModel):
 
 # ─── Network ────────────────────────────────────────────────────────────────
 
+
 class NetworkAdapter(BaseModel):
     """Network adapter information."""
+
     name: str = ""
     description: str = ""
     mac_address: str = ""
@@ -263,6 +286,7 @@ class NetworkAdapter(BaseModel):
 
 class NetworkInfo(BaseModel):
     """Complete network information."""
+
     hostname: str = ""
     adapters: list[NetworkAdapter] = Field(default_factory=list)
     public_ip: str = ""
@@ -271,6 +295,7 @@ class NetworkInfo(BaseModel):
 
 class PingResult(BaseModel):
     """Ping command result."""
+
     host: str = ""
     resolved_ip: str = ""
     packets_sent: int = 0
@@ -284,6 +309,7 @@ class PingResult(BaseModel):
 
 class DnsResult(BaseModel):
     """DNS lookup result."""
+
     domain: str = ""
     addresses: list[str] = Field(default_factory=list)
     aliases: list[str] = Field(default_factory=list)
@@ -292,6 +318,7 @@ class DnsResult(BaseModel):
 
 class PortInfo(BaseModel):
     """Open port information."""
+
     port: int = 0
     protocol: str = "tcp"
     state: str = ""
@@ -303,8 +330,10 @@ class PortInfo(BaseModel):
 
 # ─── Services ───────────────────────────────────────────────────────────────
 
+
 class ServiceInfo(BaseModel):
     """Windows service information."""
+
     name: str = ""
     display_name: str = ""
     status: ServiceStatus = ServiceStatus.UNKNOWN
@@ -318,8 +347,10 @@ class ServiceInfo(BaseModel):
 
 # ─── System Info ────────────────────────────────────────────────────────────
 
+
 class CpuInfo(BaseModel):
     """CPU information."""
+
     name: str = ""
     cores_physical: int = 0
     cores_logical: int = 0
@@ -331,6 +362,7 @@ class CpuInfo(BaseModel):
 
 class MemoryInfo(BaseModel):
     """Memory information."""
+
     total_gb: float = 0.0
     available_gb: float = 0.0
     used_gb: float = 0.0
@@ -342,6 +374,7 @@ class MemoryInfo(BaseModel):
 
 class DiskInfo(BaseModel):
     """Disk/drive information."""
+
     device: str = ""
     mountpoint: str = ""
     filesystem: str = ""
@@ -353,6 +386,7 @@ class DiskInfo(BaseModel):
 
 class BatteryInfo(BaseModel):
     """Battery status information."""
+
     percent: float = 0.0
     is_charging: bool = False
     is_plugged: bool = False
@@ -362,6 +396,7 @@ class BatteryInfo(BaseModel):
 
 class SystemInfo(BaseModel):
     """Complete system information."""
+
     os_name: str = ""
     os_version: str = ""
     os_build: str = ""
@@ -379,8 +414,10 @@ class SystemInfo(BaseModel):
 
 # ─── Audio ──────────────────────────────────────────────────────────────────
 
+
 class AudioDevice(BaseModel):
     """Audio device information."""
+
     name: str = ""
     device_id: str = ""
     is_default: bool = False
@@ -392,8 +429,10 @@ class AudioDevice(BaseModel):
 
 # ─── Power ──────────────────────────────────────────────────────────────────
 
+
 class PowerPlan(BaseModel):
     """Power plan information."""
+
     name: str = ""
     guid: str = ""
     is_active: bool = False

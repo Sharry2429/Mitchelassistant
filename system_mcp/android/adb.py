@@ -3,12 +3,16 @@ system_mcp.android.adb
 Single shared ADB client.  Every Android module MUST use this instead of
 calling subprocess directly.
 """
+
 import subprocess
-from typing import List, Optional
+from typing import List
 
-from system_mcp.android.connection import ensure_connected, get_adb_prefix
-from system_mcp.core.errors import DeviceOffline, TimeoutError as MCPTimeout, SystemMCPError
-
+from system_mcp.android.connection import get_adb_prefix
+from system_mcp.core.errors import (
+    DeviceOffline,
+    TimeoutError as MCPTimeout,
+    SystemMCPError,
+)
 
 # Default timeout for ADB commands (seconds)
 _DEFAULT_TIMEOUT = 30

@@ -2,7 +2,8 @@
 system_mcp.core.result
 Unified result envelope for all System-MCP operations.
 """
-from dataclasses import dataclass, field
+
+from dataclasses import dataclass
 from typing import Any, Optional
 
 
@@ -15,6 +16,7 @@ class MCPResult:
         data:  Payload on success (type varies per operation).
         error: Human-readable error message on failure, None on success.
     """
+
     ok: bool = True
     data: Any = None
     error: Optional[str] = None

@@ -2,8 +2,13 @@ from system_mcp.core.errors import SystemMCPError
 from system_mcp.windows.config import get_config
 from system_mcp.windows.types import AudioDevice
 from system_mcp.windows.types import DisplayInfo
-from system_mcp.windows.types import NetworkAdapter, NetworkInfo, PingResult, DnsResult, PortInfo
-from typing import Any
+from system_mcp.windows.types import (
+    NetworkAdapter,
+    NetworkInfo,
+    PingResult,
+    DnsResult,
+    PortInfo,
+)
 import ctypes
 import json
 import logging
@@ -13,7 +18,6 @@ import socket
 import subprocess
 import tempfile
 import urllib.request
-
 
 # --- audio.py ---
 
@@ -27,7 +31,7 @@ __all__ = [
     "volume_up",
     "volume_down",
     "get_audio_devices",
-    "set_default_device"
+    "set_default_device",
 ]
 
 VK_VOLUME_MUTE = 0xAD
@@ -35,9 +39,11 @@ VK_VOLUME_DOWN = 0xAE
 VK_VOLUME_UP = 0xAF
 KEYEVENTF_KEYUP = 0x0002
 
+
 def _press_key(vk_code: int):
     ctypes.windll.user32.keybd_event(vk_code, 0, 0, 0)
     ctypes.windll.user32.keybd_event(vk_code, 0, KEYEVENTF_KEYUP, 0)
+
 
 def _run_powershell(script: str) -> str:
     creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
@@ -45,9 +51,10 @@ def _run_powershell(script: str) -> str:
         ["powershell", "-NoProfile", "-Command", script],
         capture_output=True,
         text=True,
-        creationflags=creationflags
+        creationflags=creationflags,
     )
     return result.stdout.strip()
+
 
 # C# snippet for CoreAudioApi to handle absolute volume and mute state
 PS_AUDIO_SCRIPT = """
@@ -106,14 +113,16 @@ namespace Audio {
 Add-Type -TypeDefinition $code -IgnoreWarnings
 """
 
+
 def get_volume() -> float:
     """Get system volume 0-100."""
     script = PS_AUDIO_SCRIPT + "\\n[Audio.Volume]::Get()"
     try:
         val = _run_powershell(script)
-        return float(val.replace(',', '.'))
+        return float(val.replace(",", "."))
     except Exception as e:
-        raise SystemMCPError('Failed to read system volume') from e
+        raise SystemMCPError("Failed to read system volume") from e
+
 
 def set_volume(level: int) -> None:
     """Set system volume 0-100."""
@@ -121,19 +130,23 @@ def set_volume(level: int) -> None:
     script = PS_AUDIO_SCRIPT + f"\\n[Audio.Volume]::Set({level})"
     _run_powershell(script)
 
+
 def mute() -> None:
     """Mute system."""
     if not is_muted():
         _press_key(VK_VOLUME_MUTE)
+
 
 def unmute() -> None:
     """Unmute system."""
     if is_muted():
         _press_key(VK_VOLUME_MUTE)
 
+
 def toggle_mute() -> None:
     """Toggle mute system."""
     _press_key(VK_VOLUME_MUTE)
+
 
 def is_muted() -> bool:
     """Check mute state."""
@@ -141,15 +154,18 @@ def is_muted() -> bool:
     val = _run_powershell(script).strip().lower()
     return val == "true"
 
+
 def volume_up(steps: int = 2) -> None:
     """Increase volume using VK_VOLUME_UP key."""
     for _ in range(steps):
         _press_key(VK_VOLUME_UP)
 
+
 def volume_down(steps: int = 2) -> None:
     """Decrease volume using VK_VOLUME_DOWN key."""
     for _ in range(steps):
         _press_key(VK_VOLUME_DOWN)
+
 
 def get_audio_devices() -> list[AudioDevice]:
     """Get audio devices."""
@@ -163,15 +179,18 @@ def get_audio_devices() -> list[AudioDevice]:
             data = [data]
         devices = []
         for item in data:
-            devices.append(AudioDevice(
-                id=item.get("Name", ""),
-                name=item.get("Name", ""),
-                is_default=False,
-                device_type="output"
-            ))
+            devices.append(
+                AudioDevice(
+                    id=item.get("Name", ""),
+                    name=item.get("Name", ""),
+                    is_default=False,
+                    device_type="output",
+                )
+            )
         return devices
     except Exception:
         return []
+
 
 def set_default_device(name: str) -> bool:
     """Set default audio device.
@@ -185,30 +204,47 @@ def set_default_device(name: str) -> bool:
 
 
 __all__ = [
-    'get_displays', 'get_primary_display', 'get_display_resolution',
-    'get_dpi_scale', 'get_screen_size', 'set_brightness', 'get_brightness'
+    "get_displays",
+    "get_primary_display",
+    "get_display_resolution",
+    "get_dpi_scale",
+    "get_screen_size",
+    "set_brightness",
+    "get_brightness",
 ]
+
 
 def get_displays() -> list[DisplayInfo]:
     displays = []
-    
+
     def monitor_enum_proc(hMonitor, hdcMonitor, lprcMonitor, dwData):
         displays.append(DisplayInfo(handle=hMonitor))
         return 1
-    
-    MonitorEnumProc = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p), ctypes.c_void_p)
-    ctypes.windll.user32.EnumDisplayMonitors(None, None, MonitorEnumProc(monitor_enum_proc), 0)
-    
+
+    MonitorEnumProc = ctypes.WINFUNCTYPE(
+        ctypes.c_int,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.c_void_p,
+    )
+    ctypes.windll.user32.EnumDisplayMonitors(
+        None, None, MonitorEnumProc(monitor_enum_proc), 0
+    )
+
     return displays
+
 
 def get_primary_display() -> DisplayInfo:
     return DisplayInfo(handle=0, is_primary=True)
+
 
 def get_display_resolution() -> tuple[int, int]:
     user32 = ctypes.windll.user32
     width = user32.GetSystemMetrics(0)
     height = user32.GetSystemMetrics(1)
     return width, height
+
 
 def get_dpi_scale() -> float:
     try:
@@ -219,29 +255,36 @@ def get_dpi_scale() -> float:
     except AttributeError:
         return 1.0
 
+
 def get_screen_size() -> tuple[int, int]:
     user32 = ctypes.windll.user32
-    width = user32.GetSystemMetrics(78) # SM_CXVIRTUALSCREEN
-    height = user32.GetSystemMetrics(79) # SM_CYVIRTUALSCREEN
+    width = user32.GetSystemMetrics(78)  # SM_CXVIRTUALSCREEN
+    height = user32.GetSystemMetrics(79)  # SM_CYVIRTUALSCREEN
     return width, height
+
 
 def set_brightness(level: int) -> bool:
     if not (0 <= level <= 100):
         raise ValueError("Brightness must be between 0 and 100")
     config = get_config()
-    
+
     ps_command = f"(Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightnessMethods).WmiSetBrightness(1,{level})"
     try:
-        result = subprocess.run(["powershell", "-Command", ps_command], capture_output=True, text=True)
+        result = subprocess.run(
+            ["powershell", "-Command", ps_command], capture_output=True, text=True
+        )
         return result.returncode == 0
     except Exception as e:
         logging.error(f"Failed to set brightness: {e}")
         return False
 
+
 def get_brightness() -> int:
     ps_command = "(Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightness).CurrentBrightness"
     try:
-        result = subprocess.run(["powershell", "-Command", ps_command], capture_output=True, text=True)
+        result = subprocess.run(
+            ["powershell", "-Command", ps_command], capture_output=True, text=True
+        )
         if result.returncode == 0 and result.stdout.strip().isdigit():
             return int(result.stdout.strip())
         return -1
@@ -253,22 +296,23 @@ def get_brightness() -> int:
 # --- network.py ---
 
 __all__ = [
-    'get_network_adapters',
-    'get_network_info',
-    'get_ip_addresses',
-    'get_public_ip',
-    'get_wifi_networks',
-    'connect_wifi',
-    'disconnect_wifi',
-    'ping',
-    'traceroute',
-    'get_open_ports',
-    'dns_lookup',
-    'get_firewall_status',
-    'add_firewall_rule',
-    'remove_firewall_rule',
-    'flush_dns'
+    "get_network_adapters",
+    "get_network_info",
+    "get_ip_addresses",
+    "get_public_ip",
+    "get_wifi_networks",
+    "connect_wifi",
+    "disconnect_wifi",
+    "ping",
+    "traceroute",
+    "get_open_ports",
+    "dns_lookup",
+    "get_firewall_status",
+    "add_firewall_rule",
+    "remove_firewall_rule",
+    "flush_dns",
 ]
+
 
 def get_network_adapters() -> list[NetworkAdapter]:
     adapters = []
@@ -283,21 +327,25 @@ def get_network_adapters() -> list[NetworkAdapter]:
                 ip = addr.address
             elif addr.family == psutil.AF_LINK:
                 mac = addr.address
-        adapters.append(NetworkAdapter(
-            name=name,
-            ip_address=ip or "",
-            mac_address=mac or "",
-            is_up=stats.isup if stats else False,
-            speed=stats.speed if stats else 0
-        ))
+        adapters.append(
+            NetworkAdapter(
+                name=name,
+                ip_address=ip or "",
+                mac_address=mac or "",
+                is_up=stats.isup if stats else False,
+                speed=stats.speed if stats else 0,
+            )
+        )
     return adapters
+
 
 def get_network_info() -> NetworkInfo:
     return NetworkInfo(
         hostname=socket.gethostname(),
         adapters=get_network_adapters(),
-        public_ip=get_public_ip()
+        public_ip=get_public_ip(),
     )
+
 
 def get_ip_addresses() -> dict[str, list[str]]:
     ips = {}
@@ -305,38 +353,44 @@ def get_ip_addresses() -> dict[str, list[str]]:
         ips[name] = [addr.address for addr in addrs if addr.family == socket.AF_INET]
     return ips
 
+
 def get_public_ip() -> str:
     try:
         req = urllib.request.Request("https://api.ipify.org")
         with urllib.request.urlopen(req, timeout=5) as response:
-            return response.read().decode('utf-8').strip()
+            return response.read().decode("utf-8").strip()
     except Exception:
         return ""
 
+
 def get_wifi_networks() -> list[dict[str, str]]:
     try:
-        output = subprocess.check_output(['netsh', 'wlan', 'show', 'networks', 'mode=bssid'], creationflags=subprocess.CREATE_NO_WINDOW).decode('utf-8', errors='ignore')
+        output = subprocess.check_output(
+            ["netsh", "wlan", "show", "networks", "mode=bssid"],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        ).decode("utf-8", errors="ignore")
         networks = []
         current_ssid = None
         for line in output.splitlines():
             line = line.strip()
-            if line.startswith('SSID'):
-                parts = line.split(':', 1)
+            if line.startswith("SSID"):
+                parts = line.split(":", 1)
                 if len(parts) > 1:
                     current_ssid = parts[1].strip()
-                    networks.append({'ssid': current_ssid})
-            elif line.startswith('Authentication') and current_ssid:
-                networks[-1]['auth'] = line.split(':', 1)[1].strip()
-            elif line.startswith('Encryption') and current_ssid:
-                networks[-1]['encryption'] = line.split(':', 1)[1].strip()
+                    networks.append({"ssid": current_ssid})
+            elif line.startswith("Authentication") and current_ssid:
+                networks[-1]["auth"] = line.split(":", 1)[1].strip()
+            elif line.startswith("Encryption") and current_ssid:
+                networks[-1]["encryption"] = line.split(":", 1)[1].strip()
         return networks
     except Exception:
         return []
 
+
 def connect_wifi(ssid: str, password: str | None = None) -> bool:
     try:
         if password:
-            profile_xml = f'''<?xml version="1.0"?>
+            profile_xml = f"""<?xml version="1.0"?>
 <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
     <name>{ssid}</name>
     <SSIDConfig>
@@ -360,56 +414,79 @@ def connect_wifi(ssid: str, password: str | None = None) -> bool:
             </sharedKey>
         </security>
     </MSM>
-</WLANProfile>'''
+</WLANProfile>"""
             fd, path = tempfile.mkstemp(suffix=".xml")
-            with os.fdopen(fd, 'w') as f:
+            with os.fdopen(fd, "w") as f:
                 f.write(profile_xml)
-            subprocess.check_call(['netsh', 'wlan', 'add', 'profile', 'filename=' + path], creationflags=subprocess.CREATE_NO_WINDOW)
+            subprocess.check_call(
+                ["netsh", "wlan", "add", "profile", "filename=" + path],
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
             os.remove(path)
-            
-        subprocess.check_call(['netsh', 'wlan', 'connect', 'name=' + ssid], creationflags=subprocess.CREATE_NO_WINDOW)
+
+        subprocess.check_call(
+            ["netsh", "wlan", "connect", "name=" + ssid],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
         return True
     except Exception:
         return False
+
 
 def disconnect_wifi() -> bool:
     try:
-        subprocess.check_call(['netsh', 'wlan', 'disconnect'], creationflags=subprocess.CREATE_NO_WINDOW)
+        subprocess.check_call(
+            ["netsh", "wlan", "disconnect"], creationflags=subprocess.CREATE_NO_WINDOW
+        )
         return True
     except Exception:
         return False
 
+
 def ping(host: str, count: int = 4, timeout: int = 5) -> PingResult:
     try:
-        output = subprocess.check_output(['ping', '-n', str(count), '-w', str(timeout * 1000), host], creationflags=subprocess.CREATE_NO_WINDOW).decode('utf-8', errors='ignore')
+        output = subprocess.check_output(
+            ["ping", "-n", str(count), "-w", str(timeout * 1000), host],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        ).decode("utf-8", errors="ignore")
         return PingResult(success=True, output=output)
     except subprocess.CalledProcessError as e:
-        return PingResult(success=False, output=e.output.decode('utf-8', errors='ignore'))
+        return PingResult(
+            success=False, output=e.output.decode("utf-8", errors="ignore")
+        )
+
 
 def traceroute(host: str, max_hops: int = 30) -> list[dict]:
     try:
-        output = subprocess.check_output(['tracert', '-h', str(max_hops), host], creationflags=subprocess.CREATE_NO_WINDOW).decode('utf-8', errors='ignore')
+        output = subprocess.check_output(
+            ["tracert", "-h", str(max_hops), host],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        ).decode("utf-8", errors="ignore")
         hops = []
         for line in output.splitlines():
             if line.strip() and line.strip()[0].isdigit():
-                hops.append({'hop': line.strip()})
+                hops.append({"hop": line.strip()})
         return hops
     except Exception:
         return []
 
+
 def get_open_ports(pid: int | None = None) -> list[PortInfo]:
     ports = []
     for conn in psutil.net_connections():
-        if conn.status == 'LISTEN':
+        if conn.status == "LISTEN":
             if pid and conn.pid != pid:
                 continue
-            ports.append(PortInfo(
-                port=conn.laddr.port,
-                protocol='TCP' if conn.type == socket.SOCK_STREAM else 'UDP',
-                pid=conn.pid,
-                address=conn.laddr.ip
-            ))
+            ports.append(
+                PortInfo(
+                    port=conn.laddr.port,
+                    protocol="TCP" if conn.type == socket.SOCK_STREAM else "UDP",
+                    pid=conn.pid,
+                    address=conn.laddr.ip,
+                )
+            )
     return ports
+
 
 def dns_lookup(domain: str) -> DnsResult:
     try:
@@ -419,39 +496,70 @@ def dns_lookup(domain: str) -> DnsResult:
     except Exception as e:
         return DnsResult(domain=domain, ips=[])
 
+
 def get_firewall_status() -> dict[str, str]:
     try:
-        output = subprocess.check_output(['netsh', 'advfirewall', 'show', 'allprofiles'], creationflags=subprocess.CREATE_NO_WINDOW).decode('utf-8', errors='ignore')
-        return {'status': 'enabled' if 'ON' in output else 'disabled'}
+        output = subprocess.check_output(
+            ["netsh", "advfirewall", "show", "allprofiles"],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        ).decode("utf-8", errors="ignore")
+        return {"status": "enabled" if "ON" in output else "disabled"}
     except Exception:
-        return {'status': 'unknown'}
+        return {"status": "unknown"}
 
-def add_firewall_rule(name: str, direction: str, action: str, port: int | None = None, program: str | None = None) -> bool:
+
+def add_firewall_rule(
+    name: str,
+    direction: str,
+    action: str,
+    port: int | None = None,
+    program: str | None = None,
+) -> bool:
     config = get_config()
-    if config.get('safeguards', True):
-        if action.lower() == 'allow' and direction.lower() == 'in' and str(port) in ('445', '3389', '22'):
+    if config.get("safeguards", True):
+        if (
+            action.lower() == "allow"
+            and direction.lower() == "in"
+            and str(port) in ("445", "3389", "22")
+        ):
             raise ValueError(f"Safeguard blocked allowing inbound port {port}")
-    cmd = ['netsh', 'advfirewall', 'firewall', 'add', 'rule', f'name={name}', f'dir={direction}', f'action={action}']
+    cmd = [
+        "netsh",
+        "advfirewall",
+        "firewall",
+        "add",
+        "rule",
+        f"name={name}",
+        f"dir={direction}",
+        f"action={action}",
+    ]
     if port:
-        cmd.extend(['protocol=TCP', f'localport={port}'])
+        cmd.extend(["protocol=TCP", f"localport={port}"])
     if program:
-        cmd.append(f'program={program}')
+        cmd.append(f"program={program}")
     try:
         subprocess.check_call(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
         return True
     except Exception:
         return False
 
+
 def remove_firewall_rule(name: str) -> bool:
     try:
-        subprocess.check_call(['netsh', 'advfirewall', 'firewall', 'delete', 'rule', f'name={name}'], creationflags=subprocess.CREATE_NO_WINDOW)
+        subprocess.check_call(
+            ["netsh", "advfirewall", "firewall", "delete", "rule", f"name={name}"],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
         return True
     except Exception:
         return False
 
+
 def flush_dns() -> bool:
     try:
-        subprocess.check_call(['ipconfig', '/flushdns'], creationflags=subprocess.CREATE_NO_WINDOW)
+        subprocess.check_call(
+            ["ipconfig", "/flushdns"], creationflags=subprocess.CREATE_NO_WINDOW
+        )
         return True
     except Exception:
         return False

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
 
 __all__ = ["WinControlConfig", "get_config", "configure"]
@@ -40,7 +40,9 @@ class WinControlConfig:
     admin_elevation: bool = True
 
     def __post_init__(self) -> None:
-        logging.basicConfig(level=getattr(logging, self.log_level.upper(), logging.WARNING))
+        logging.basicConfig(
+            level=getattr(logging, self.log_level.upper(), logging.WARNING)
+        )
         logger.setLevel(getattr(logging, self.log_level.upper(), logging.WARNING))
 
 

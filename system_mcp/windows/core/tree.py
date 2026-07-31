@@ -5,9 +5,8 @@ from __future__ import annotations
 import ctypes
 import ctypes.wintypes
 import logging
-from typing import Any
 
-from system_mcp.windows.types import UIElement, BoundingBox, TreeState
+from system_mcp.windows.types import UIElement, BoundingBox
 
 __all__ = [
     "walk_ui_tree",
@@ -134,9 +133,7 @@ def walk_ui_tree(
             label=label_counter[0],
             name=text,
             control_type=control_type,
-            bounding_box=BoundingBox(
-                left=left, top=top, right=right, bottom=bottom
-            ),
+            bounding_box=BoundingBox(left=left, top=top, right=right, bottom=bottom),
             center=(center_x, center_y),
             window_name=parent_name or text,
             is_enabled=bool(user32.IsWindowEnabled(h)),
@@ -192,9 +189,18 @@ def get_interactive_elements(
     all_elements = walk_ui_tree(hwnd, max_depth=max_depth)
 
     interactive_types = {
-        "Button", "Edit", "ComboBox", "List", "Slider",
-        "Tab", "Tree", "Hyperlink", "MenuItem", "CheckBox",
-        "RadioButton", "ScrollBar",
+        "Button",
+        "Edit",
+        "ComboBox",
+        "List",
+        "Slider",
+        "Tab",
+        "Tree",
+        "Hyperlink",
+        "MenuItem",
+        "CheckBox",
+        "RadioButton",
+        "ScrollBar",
     }
 
     return [el for el in all_elements if el.control_type in interactive_types]
@@ -306,7 +312,11 @@ def get_element_at_point(x: int, y: int) -> UIElement | None:
     user32.GetWindowRect(hwnd, ctypes.byref(rect))
 
     length = user32.GetWindowTextLengthW(hwnd)
-    buf = ctypes.create_unicode_buffer(length + 1) if length > 0 else ctypes.create_unicode_buffer(1)
+    buf = (
+        ctypes.create_unicode_buffer(length + 1)
+        if length > 0
+        else ctypes.create_unicode_buffer(1)
+    )
     user32.GetWindowTextW(hwnd, buf, length + 1)
 
     class_buf = ctypes.create_unicode_buffer(256)

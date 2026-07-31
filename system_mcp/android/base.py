@@ -1,17 +1,9 @@
 """
 system_mcp.android.base
-Shared base class for all Android modules and module-level singleton for the
-CompanionBridge.
+Shared base class for all Android modules.
 """
-from system_mcp.core.audit import check_destructive, check_sensitive
-from system_mcp.core.errors import (
-    ADBCommandError,
-    DeviceOffline,
-    RequiresConfirmation,
-    SensitiveModuleDisabled,
-)
 
-# Removed companion bridge logic
+from system_mcp.core.audit import check_destructive, check_sensitive
 
 
 def require_enabled(module: str, action: str):

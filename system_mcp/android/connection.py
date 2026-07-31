@@ -2,6 +2,7 @@
 system_mcp.android.connection
 Provides access to the active Android device for ADB and uiautomator2.
 """
+
 import subprocess
 import uiautomator2 as u2
 from typing import List, Optional
@@ -10,12 +11,11 @@ from system_mcp.core.errors import DeviceOffline, SystemMCPError
 
 import os
 import json
-import socket
-import struct
 
 _active_serial = None
 _u2_device = None
 _config_path = os.path.expanduser("~/.system_mcp_adb_wifi.json")
+
 
 def _get_saved_wifi_ip() -> Optional[str]:
     if os.path.exists(_config_path):
@@ -26,6 +26,7 @@ def _get_saved_wifi_ip() -> Optional[str]:
             pass
     return None
 
+
 def _save_wifi_ip(ip: str):
     try:
         with open(_config_path, "w") as f:
@@ -33,8 +34,10 @@ def _save_wifi_ip(ip: str):
     except:
         pass
 
+
 _TAILSCALE_HOST = os.environ.get("SYSTEM_MCP_TAILSCALE_HOST")
 _TAILSCALE_PORT = os.environ.get("SYSTEM_MCP_TAILSCALE_PORT", "5555")
+
 
 def _connect_tailscale() -> Optional[str]:
     """Try connecting to the device over its Tailscale address, if configured."""
@@ -52,35 +55,50 @@ def _connect_tailscale() -> Optional[str]:
         return None
     target = f"{host}:{_TAILSCALE_PORT}"
     try:
-        result = subprocess.run(["adb", "connect", target], capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            ["adb", "connect", target], capture_output=True, text=True, timeout=10
+        )
         if "connected" in result.stdout.lower() or "already" in result.stdout.lower():
             return target
     except Exception:
         pass
     return None
 
+
 def get_active_serial() -> str:
     """Returns the serial of the active connected device, or raises DeviceOffline."""
     global _active_serial
     if _active_serial:
         # Liveness check
-        res = subprocess.run(["adb", "-s", _active_serial, "get-state"], capture_output=True, text=True)
+        res = subprocess.run(
+            ["adb", "-s", _active_serial, "get-state"], capture_output=True, text=True
+        )
         if "device" in res.stdout:
             return _active_serial
         else:
             _active_serial = None
-            
+
     if not _active_serial:
         result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
         lines = result.stdout.strip().split("\n")[1:]
-        devices = [line.split("\t")[0] for line in lines if "device" in line and "offline" not in line]
-        
+        devices = [
+            line.split("\t")[0]
+            for line in lines
+            if "device" in line and "offline" not in line
+        ]
+
         if not devices:
             ts_target = _connect_tailscale()
             if ts_target:
-                result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["adb", "devices"], capture_output=True, text=True
+                )
                 lines = result.stdout.strip().split("\n")[1:]
-                devices = [line.split("\t")[0] for line in lines if "device" in line and "offline" not in line]
+                devices = [
+                    line.split("\t")[0]
+                    for line in lines
+                    if "device" in line and "offline" not in line
+                ]
 
         if not devices:
             # Fallback to saved Wi-Fi IP
@@ -88,51 +106,72 @@ def get_active_serial() -> str:
             if saved_ip:
                 target = f"{saved_ip}:5555"
                 subprocess.run(["adb", "connect", target], capture_output=True)
-                
+
                 # Check again
-                result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["adb", "devices"], capture_output=True, text=True
+                )
                 lines = result.stdout.strip().split("\n")[1:]
-                devices = [line.split("\t")[0] for line in lines if "device" in line and "offline" not in line]
-                
+                devices = [
+                    line.split("\t")[0]
+                    for line in lines
+                    if "device" in line and "offline" not in line
+                ]
+
             if not devices:
-                raise DeviceOffline("No Android devices found or device is offline. Plug in via USB once to enable Auto-Wi-Fi, or check network.")
-                
+                raise DeviceOffline(
+                    "No Android devices found or device is offline. Plug in via USB once to enable Auto-Wi-Fi, or check network."
+                )
+
         _active_serial = devices[0]
-        
+
         # Auto-Upgrade to Wi-Fi ADB if connected via USB
         if ":" not in _active_serial and not _active_serial.startswith("emulator-"):
             try:
                 # 1. Get device IP address
-                ip_res = subprocess.run(["adb", "-s", _active_serial, "shell", "ip", "route"], capture_output=True, text=True)
+                ip_res = subprocess.run(
+                    ["adb", "-s", _active_serial, "shell", "ip", "route"],
+                    capture_output=True,
+                    text=True,
+                )
                 # Find the wlan0 IP (e.g. 192.168.1.55)
                 wifi_ip = None
-                for line in ip_res.stdout.split('\n'):
-                    if 'wlan0' in line and 'src' in line:
-                        parts = line.split(' ')
-                        if 'src' in parts:
-                            wifi_ip = parts[parts.index('src') + 1]
+                for line in ip_res.stdout.split("\n"):
+                    if "wlan0" in line and "src" in line:
+                        parts = line.split(" ")
+                        if "src" in parts:
+                            wifi_ip = parts[parts.index("src") + 1]
                             break
-                
+
                 if wifi_ip:
                     # 2. Enable TCP/IP on port 5555
-                    subprocess.run(["adb", "-s", _active_serial, "tcpip", "5555"], capture_output=True, timeout=5)
-                    
+                    subprocess.run(
+                        ["adb", "-s", _active_serial, "tcpip", "5555"],
+                        capture_output=True,
+                        timeout=5,
+                    )
+
                     # 3. Connect wirelessly
                     target = f"{wifi_ip}:5555"
-                    connect_res = subprocess.run(["adb", "connect", target], capture_output=True, text=True, timeout=10)
-                    
+                    connect_res = subprocess.run(
+                        ["adb", "connect", target],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
+
                     if "connected" in connect_res.stdout.lower():
                         _active_serial = target
                         _save_wifi_ip(wifi_ip)
             except Exception:
-                pass # Fail gracefully and continue using USB
-    
-    # Removed companion port forwarding
-        
+                pass  # Fail gracefully and continue using USB
+
     return _active_serial
+
 
 import time
 import logging
+
 
 def ensure_connected(retry_seconds: int = 5, max_wait: int = 60) -> str:
     """Watchdog wrapper around get_active_serial that retries on DeviceOffline."""
@@ -147,23 +186,26 @@ def ensure_connected(retry_seconds: int = 5, max_wait: int = 60) -> str:
             logging.warning(f"Device offline. Retrying in {retry_seconds}s... ({e})")
             time.sleep(retry_seconds)
 
+
 def get_adb_prefix() -> List[str]:
     """Returns the base adb command list targeting the active device."""
     serial = ensure_connected()
     return ["adb", "-s", serial]
+
 
 def get_u2_device() -> u2.Device:
     """Returns the active uiautomator2 device connection."""
     global _u2_device
     if _u2_device:
         return _u2_device
-        
+
     serial = ensure_connected()
     try:
         _u2_device = u2.connect(serial)
         return _u2_device
     except Exception as e:
         raise SystemMCPError(f"Failed to initialize uiautomator2 on {serial}: {e}")
+
 
 def reset_connection():
     global _active_serial, _u2_device

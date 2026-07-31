@@ -1,6 +1,6 @@
 """
 System-MCP
-Control your own devices from Python or via MCP, featuring unified Windows 
+Control your own devices from Python or via MCP, featuring unified Windows
 and Android automation.
 
 Modules:
