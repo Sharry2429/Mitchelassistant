@@ -30,6 +30,9 @@ System-MCP is not just an automation tool; it is a fully-fledged Assistant (Mitc
 - **Default Assistant Role:** Registered as a `VoiceInteractionService` to replace Google Assistant. It intercepts the "Home Button Long Press" (or voice triggers), captures the foreground `AssistStructure` screen context, and routes it to the LLM.
 - **System-Wide Overlay:** Injects a dynamic, draggable glassmorphism UI directly into the Android `WindowManager`. The LLM can dynamically spawn custom buttons on the user's screen (e.g., "Dismiss", "Read this page") that trigger specific MCP callbacks when tapped.
 
+### 🤖 Autopilot Loop
+System-MCP includes a bounded, repeatable agentic improvement loop inspired by `karpathy/autoresearch`. It uses a deterministic static analyzer (`autopilot/check.py`) to systematically locate and fix protocol mismatches, dead code, and lint errors safely offline. See the [autopilot directory](autopilot/README.md) for more info.
+
 ---
 
 ## 🛠 Architecture & Tech Stack
