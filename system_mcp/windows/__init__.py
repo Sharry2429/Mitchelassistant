@@ -260,6 +260,9 @@ from system_mcp.windows.apps import (
 # ─── TTS (Text-to-Speech) ────────────────────────────────────────────────
 from system_mcp.windows.tts import speak, get_voices
 
+# ─── STT (Speech-to-Text) ────────────────────────────────────────────────
+from system_mcp.windows.stt import listen_and_transcribe
+
 # ─── Convenience: All public names ─────────────────────────────────────────
 __all__ = [
     # Config
@@ -434,6 +437,8 @@ __all__ = [
     # TTS
     "speak",
     "get_voices",
+    # STT
+    "listen_and_transcribe",
     # Types (re-exported for convenience)
     "DesktopState",
     "Window",
