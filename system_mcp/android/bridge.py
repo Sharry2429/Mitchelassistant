@@ -75,11 +75,13 @@ class CompanionBridge:
             return
 
         # Ensure ADB is connected and the port is forwarded
-        try:
-            from system_mcp.android.connection import get_active_serial
-            get_active_serial()
-        except Exception as e:
-            pass
+        while True:
+            try:
+                from system_mcp.android.connection import ensure_connected
+                ensure_connected()
+                break
+            except Exception:
+                time.sleep(1)
 
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

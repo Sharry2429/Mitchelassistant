@@ -41,11 +41,24 @@ fun SimpleDashboard(requestPermissions: (Array<String>) -> Unit) {
     val context = LocalContext.current
     var isConnected by remember { mutableStateOf(MitchellService.isRunning()) }
     var isEnabled by remember { mutableStateOf(Prefs.isEnabled(context)) }
-    var authToken by remember { mutableStateOf(context.getSharedPreferences("mcp_prefs", Context.MODE_PRIVATE).getString("auth_token", "system_mcp_secret") ?: "system_mcp_secret") }
+    var authToken by remember { 
+        mutableStateOf(
+            context.getSharedPreferences("mcp_prefs", Context.MODE_PRIVATE).getString("auth_token", null) ?: run {
+                val newToken = java.util.UUID.randomUUID().toString().substring(0, 16)
+                context.getSharedPreferences("mcp_prefs", Context.MODE_PRIVATE).edit().putString("auth_token", newToken).apply()
+                newToken
+            }
+        )
+    }
     
     var isAssistantRole by remember { mutableStateOf(false) }
     var isOverlayGranted by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var isCallPhoneGranted by remember { mutableStateOf(context.checkSelfPermission(android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) }
+    var isBatteryExempt by remember { 
+        mutableStateOf(
+            (context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isIgnoringBatteryOptimizations(context.packageName)
+        )
+    }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -55,39 +68,42 @@ fun SimpleDashboard(requestPermissions: (Array<String>) -> Unit) {
             isCallPhoneGranted = context.checkSelfPermission(android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
             val secureSettings = Settings.Secure.getString(context.contentResolver, "assistant")
             isAssistantRole = secureSettings?.contains(context.packageName) == true
+            isBatteryExempt = (context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isIgnoringBatteryOptimizations(context.packageName)
         }
     }
 
     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Mitchell AI Service: ${if (isConnected) "Running" else "Stopped"}", style = MaterialTheme.typography.titleLarge)
         
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text("Auto-start & Enabled:")
-            Spacer(modifier = Modifier.width(8.dp))
-            Switch(
-                checked = isEnabled,
-                onCheckedChange = { checked ->
-                    isEnabled = checked
-                    Prefs.setEnabled(context, checked)
-                    if (checked) {
-                        MitchellService.startCompanion(context, authToken)
-                    } else {
-                        MitchellService.stopCompanion(context)
-                    }
+        Button(
+            onClick = {
+                val newState = !isConnected
+                isEnabled = newState
+                Prefs.setEnabled(context, newState)
+                if (newState) {
+                    MitchellService.startCompanion(context, authToken)
+                } else {
+                    MitchellService.stopCompanion(context)
                 }
-            )
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isConnected) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+            ),
+            modifier = Modifier.fillMaxWidth().height(64.dp)
+        ) {
+            Text(if (isConnected) "Stop Mitchell AI" else "Start Mitchell AI", style = MaterialTheme.typography.titleMedium)
         }
 
         OutlinedTextField(
             value = authToken,
-            onValueChange = { authToken = it },
+            onValueChange = { 
+                authToken = it
+                context.getSharedPreferences("mcp_prefs", Context.MODE_PRIVATE).edit().putString("auth_token", it).apply()
+            },
             label = { Text("Auth Token") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-        Button(onClick = { MitchellService.startCompanion(context, authToken) }) {
-            Text("Save & Start")
-        }
 
         Divider()
         Text("Permissions", style = MaterialTheme.typography.titleMedium)
@@ -100,6 +116,12 @@ fun SimpleDashboard(requestPermissions: (Array<String>) -> Unit) {
         }
         PermissionRow("Call Phone & Mic", isCallPhoneGranted) {
             requestPermissions(arrayOf(android.Manifest.permission.CALL_PHONE, android.Manifest.permission.READ_CALL_LOG, android.Manifest.permission.RECORD_AUDIO))
+        }
+        PermissionRow("Battery Exemption", isBatteryExempt) {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = android.net.Uri.parse("package:${context.packageName}")
+            }
+            context.startActivity(intent)
         }
     }
 }

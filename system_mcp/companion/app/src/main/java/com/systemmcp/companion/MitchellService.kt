@@ -317,18 +317,34 @@ class MitchellService : Service() {
         startTime = System.currentTimeMillis()
         totalRequests = 0
         serviceScope.launch {
-            try {
-                serverSocket = ServerSocket(5000) // Binds to all interfaces to support Tailscale
-                while (isServerRunning) {
-                    val clientSocket = serverSocket?.accept() ?: break
-                    serviceScope.launch {
-                        handleClientConnection(clientSocket)
+            var retryDelay = 1000L
+            val maxDelay = 30000L
+            
+            while (isServerRunning) {
+                try {
+                    if (serverSocket == null || serverSocket?.isClosed == true) {
+                        serverSocket = ServerSocket(5000) // Binds to all interfaces to support Tailscale
+                    }
+                    
+                    while (isServerRunning) {
+                        val clientSocket = serverSocket?.accept() ?: break
+                        serviceScope.launch {
+                            handleClientConnection(clientSocket)
+                        }
+                    }
+                    retryDelay = 1000L // Reset delay after normal exit
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    try {
+                        serverSocket?.close()
+                    } catch (_: Exception) {}
+                    serverSocket = null
+                    
+                    if (isServerRunning) {
+                        kotlinx.coroutines.delay(retryDelay)
+                        retryDelay = (retryDelay * 2).coerceAtMost(maxDelay)
                     }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                isServerRunning = false
             }
         }
     }

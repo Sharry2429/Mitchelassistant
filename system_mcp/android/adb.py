@@ -6,7 +6,7 @@ calling subprocess directly.
 import subprocess
 from typing import List, Optional
 
-from system_mcp.android.connection import get_active_serial, get_adb_prefix
+from system_mcp.android.connection import ensure_connected, get_adb_prefix
 from system_mcp.core.errors import DeviceOffline, TimeoutError as MCPTimeout, SystemMCPError
 
 

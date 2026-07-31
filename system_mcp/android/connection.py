@@ -38,9 +38,19 @@ _TAILSCALE_PORT = os.environ.get("SYSTEM_MCP_TAILSCALE_PORT", "5555")
 
 def _connect_tailscale() -> Optional[str]:
     """Try connecting to the device over its Tailscale address, if configured."""
-    if not _TAILSCALE_HOST:
+    host = _TAILSCALE_HOST
+    if not host:
+        ts_config_path = os.path.expanduser("~/.system_mcp_tailscale.json")
+        if os.path.exists(ts_config_path):
+            try:
+                with open(ts_config_path, "r") as f:
+                    host = json.load(f).get("SYSTEM_MCP_TAILSCALE_HOST")
+            except Exception:
+                pass
+
+    if not host:
         return None
-    target = f"{_TAILSCALE_HOST}:{_TAILSCALE_PORT}"
+    target = f"{host}:{_TAILSCALE_PORT}"
     try:
         result = subprocess.run(["adb", "connect", target], capture_output=True, text=True, timeout=10)
         if "connected" in result.stdout.lower() or "already" in result.stdout.lower():
@@ -125,9 +135,25 @@ def get_active_serial() -> str:
         
     return _active_serial
 
+import time
+import logging
+
+def ensure_connected(retry_seconds: int = 5, max_wait: int = 60) -> str:
+    """Watchdog wrapper around get_active_serial that retries on DeviceOffline."""
+    start_time = time.time()
+    while True:
+        try:
+            return get_active_serial()
+        except DeviceOffline as e:
+            if time.time() - start_time >= max_wait:
+                logging.error(f"Device still offline after {max_wait}s. Failing.")
+                raise e
+            logging.warning(f"Device offline. Retrying in {retry_seconds}s... ({e})")
+            time.sleep(retry_seconds)
+
 def get_adb_prefix() -> List[str]:
     """Returns the base adb command list targeting the active device."""
-    serial = get_active_serial()
+    serial = ensure_connected()
     return ["adb", "-s", serial]
 
 def get_u2_device() -> u2.Device:
@@ -136,7 +162,7 @@ def get_u2_device() -> u2.Device:
     if _u2_device:
         return _u2_device
         
-    serial = get_active_serial()
+    serial = ensure_connected()
     try:
         _u2_device = u2.connect(serial)
         return _u2_device
