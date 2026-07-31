@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 
 from system_mcp.android._apk_ops import (
-    get_connected_device, compile_apk, install_and_configure, APK_PATH
+    get_connected_device, wait_for_device, compile_apk, install_and_configure, APK_PATH
 )
 from system_mcp.android.bridge import get_auth_token
 
@@ -47,8 +47,8 @@ def main():
     # 1. Check Tailscale on Host
     ts_status = check_tailscale_host()
 
-    # 2. Get USB connected device
-    device_serial = get_connected_device()
+    # 2. Get USB connected device, will loop and prompt until available
+    device_serial = wait_for_device()
     if not device_serial:
         fail("No Android device connected via USB. A one-time USB connection is required.")
 
@@ -74,8 +74,9 @@ def main():
     if not install_and_configure(device_serial, auth_token=token):
         fail("Failed to install or configure Companion APK.")
 
-    # 5. Enable adb_wifi_enabled (already done via Companion, but we can do it explicitly)
+    # 5. Enable adb_wifi_enabled and set tcpip to 5555
     subprocess.run(["adb", "-s", device_serial, "shell", "settings", "put", "global", "adb_wifi_enabled", "1"], capture_output=True)
+    subprocess.run(["adb", "-s", device_serial, "tcpip", "5555"], capture_output=True)
 
     # 6. Get Tailscale IP and save it
     # We need to know the Tailscale IP of the device. 

@@ -11,26 +11,53 @@ def print_step(msg: str):
     print(f"\n{Fore.CYAN}{Style.BRIGHT}[*] {msg}{Style.RESET_ALL}")
 
 def print_success(msg: str):
-    print(f"{Fore.GREEN}[✓] {msg}{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[OK] {msg}{Style.RESET_ALL}")
 
 def print_error(msg: str):
-    print(f"{Fore.RED}[✗] {msg}{Style.RESET_ALL}")
+    print(f"{Fore.RED}[FAIL] {msg}{Style.RESET_ALL}")
 
 def get_connected_device():
     result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
     lines = result.stdout.strip().split("\n")[1:]
-    devices = [l.split("\t")[0] for l in lines if "device" in l and "offline" not in l]
+    devices = [l.split("\t")[0] for l in lines if l.endswith("\tdevice")]
     return devices[0] if devices else None
 
 def wait_for_device():
     import time
     print(f"{Fore.YELLOW}Waiting for device... (Ensure screen is unlocked and 'Allow USB debugging' is checked){Style.RESET_ALL}")
+    
+    last_status = None
     while True:
+        # First check for a fully authorized device
         dev = get_connected_device()
         if dev:
             print_success(f"Device connected: {dev}")
             return dev
-        time.sleep(2)
+            
+        # Check raw adb output to diagnose the issue
+        result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
+        lines = result.stdout.strip().split("\n")[1:]
+        
+        has_unauthorized = any("unauthorized" in l for l in lines)
+        has_offline = any("offline" in l for l in lines)
+        
+        if has_unauthorized:
+            if last_status != "unauthorized":
+                print(f"{Fore.YELLOW}[!] Device is unauthorized. Please check your phone screen and tap 'Allow' for the RSA prompt.{Style.RESET_ALL}")
+                last_status = "unauthorized"
+        elif not lines or all(not l.strip() for l in lines):
+            if last_status != "empty":
+                print(f"{Fore.YELLOW}[!] No devices found. Restarting ADB server...{Style.RESET_ALL}")
+                subprocess.run(["adb", "kill-server"], capture_output=True)
+                subprocess.run(["adb", "start-server"], capture_output=True)
+                print(f"{Fore.YELLOW}[!] Please ensure USB is connected and file transfer mode is enabled.{Style.RESET_ALL}")
+                last_status = "empty"
+        elif has_offline:
+            if last_status != "offline":
+                print(f"{Fore.YELLOW}[!] Device is offline. Reconnect USB cable or restart device.{Style.RESET_ALL}")
+                last_status = "offline"
+                
+        time.sleep(3)
 
 def compile_apk():
     print_step("Compiling Companion APK...")

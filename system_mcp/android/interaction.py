@@ -114,17 +114,49 @@ def _extract_text(node: dict, results: list):
 
 def analyze_screen(prompt: str) -> MCPResult:
     """
-    Captures the current Android screen and sends it to a vision model (e.g. Gemini Flash)
+    Captures the current Android screen and sends it to the UI-TARS vision model
     along with the prompt.
     """
+    import os
+    import requests
     try:
+        api_key = os.environ.get("AICREDITS_API_KEY")
+        if not api_key:
+            return MCPResult.fail("AICREDITS_API_KEY not found in environment.")
+
         frame_res = grab_frame()
         if not frame_res.success:
             return frame_res
+            
         image_bytes = frame_res.data
         b64_image = base64.b64encode(image_bytes).decode('utf-8')
-        response_text = f"[Vision Stub] Successfully captured screen and analyzed with prompt: '{prompt}'. Simulated vision response from AICredits."
-        return MCPResult.success({'analysis': response_text, 'image_size_bytes': len(image_bytes)})
+        
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": "bytedance/ui-tars-1.5-7b",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_image}"}}
+                    ]
+                }
+            ],
+            "max_tokens": 1000
+        }
+        
+        response = requests.post("https://api.aicredits.in/v1/chat/completions", headers=headers, json=payload)
+        response.raise_for_status()
+        
+        response_data = response.json()
+        analysis = response_data['choices'][0]['message']['content']
+        
+        return MCPResult.success({'analysis': analysis, 'image_size_bytes': len(image_bytes)})
     except Exception as e:
         return MCPResult.fail(str(e))
 '\nsystem_mcp.android.voice\nSTT, TTS, and Wake-word controls bridging Android microphone/speaker to Python.\n'

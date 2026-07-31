@@ -6,6 +6,9 @@ import argparse
 from openai import AsyncOpenAI
 from mcp.client.stdio import stdio_client, StdioServerParameters
 from mcp.client.session import ClientSession
+from dotenv import load_dotenv
+
+load_dotenv()
 
 async def main():
     parser = argparse.ArgumentParser(description="Mitchell AI - Peak Assistant")
@@ -16,8 +19,8 @@ async def main():
 
     api_key = os.environ.get("AICREDITS_API_KEY")
     if not api_key:
-        print("Error: AICREDITS_API_KEY environment variable not set.")
-        print("Please set it in your environment using: setx AICREDITS_API_KEY \"your_key\"")
+        print("Error: AICREDITS_API_KEY not found in environment or .env file.")
+        print("Please add it to the .env file in the root directory: AICREDITS_API_KEY=\"your_key_here\"")
         sys.exit(1)
 
     if args.remote:
@@ -89,7 +92,7 @@ async def main():
                     
                     while True:
                         response = await llm.chat.completions.create(
-                            model="gpt-4o",
+                            model="openai/gpt-5.6-luna",
                             messages=messages,
                             tools=openai_tools
                         )
