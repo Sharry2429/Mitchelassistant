@@ -22,7 +22,7 @@ def _get_saved_wifi_ip() -> Optional[str]:
         try:
             with open(_config_path, "r") as f:
                 return json.load(f).get("wifi_ip")
-        except:
+        except (IOError, json.JSONDecodeError):
             pass
     return None
 
@@ -31,7 +31,7 @@ def _save_wifi_ip(ip: str):
     try:
         with open(_config_path, "w") as f:
             json.dump({"wifi_ip": ip}, f)
-    except:
+    except IOError:
         pass
 
 

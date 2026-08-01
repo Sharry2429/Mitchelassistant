@@ -9,6 +9,7 @@ from typing import Optional, Dict, List
 
 from system_mcp.windows.types import CommandResult
 from system_mcp.windows.config import get_config
+from system_mcp.core.audit import check_destructive, log_action
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +153,10 @@ def execute(
     timeout: Optional[int] = None,
     as_admin: bool = False,
     encoding: Optional[str] = None,
+    confirm: bool = False,
 ) -> CommandResult:
+    check_destructive("shell.execute", confirm)
+    log_action("windows.powershell", "execute", {"command": command}, {})
     config = get_config()
     # Use provided timeout or fallback to config, if it is None
     actual_timeout = (
@@ -186,8 +190,10 @@ def execute(
 
 
 def execute_script(
-    script_path: str, args: Optional[List[str]] = None, timeout: Optional[int] = None
+    script_path: str, args: Optional[List[str]] = None, timeout: Optional[int] = None, confirm: bool = False
 ) -> CommandResult:
+    check_destructive("shell.execute", confirm)
+    log_action("windows.powershell", "execute_script", {"script_path": script_path, "args": args}, {})
     config = get_config()
     actual_timeout = (
         timeout if timeout is not None else getattr(config, "default_timeout", 60)

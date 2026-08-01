@@ -1,10 +1,6 @@
 from system_mcp.windows.config import get_config
 from system_mcp.windows.core.powershell import execute as _ps_execute, is_elevated
-from system_mcp.windows.types import CommandResult, ProcessInfo
-from system_mcp.windows.types import PowerPlan
-from system_mcp.windows.types import ProcessInfo
-from system_mcp.windows.types import RegistryValue
-from system_mcp.windows.types import ServiceInfo
+from system_mcp.windows.types import CommandResult, PowerPlan, ProcessInfo, RegistryValue, ServiceInfo
 from system_mcp.windows.types import (
     SystemInfo,
     CpuInfo,
@@ -12,9 +8,8 @@ from system_mcp.windows.types import (
     DiskInfo,
     BatteryInfo,
 )
-from typing import Any
-from typing import Optional, List
-from typing import Optional, List, Union
+from typing import Any, Optional, List, Union
+from system_mcp.core.audit import check_destructive, log_action
 import ctypes
 import json
 import logging
@@ -328,9 +323,12 @@ def kill_process(pid_or_name: Union[int, str], force: bool = False) -> bool:
         return False
 
 
-def start_process(command: str, cwd: Optional[str] = None) -> ProcessInfo:
+def start_process(command: str, cwd: Optional[str] = None, confirm: bool = False) -> ProcessInfo:
     """Start new process."""
+    check_destructive("shell.execute", confirm)
+    log_action("windows.system", "start_process", {"command": command, "cwd": cwd}, {})
     try:
+        # shell=True is intended here for raw command execution; gated by check_destructive above.
         proc = subprocess.Popen(command, shell=True, cwd=cwd)
         # Create a basic info object, we might not be able to get full psutil process immediately
         return ProcessInfo(
@@ -638,7 +636,9 @@ def get_environment_variables() -> dict[str, str]:
     return dict(os.environ)
 
 
-def set_environment_variable(name: str, value: str, scope: str = "user") -> bool:
+def set_environment_variable(name: str, value: str, scope: str = "user", confirm: bool = False) -> bool:
+    check_destructive("registry.write", confirm)
+    log_action("windows.system", "set_environment_variable", {"name": name, "scope": scope}, {})
     config = get_config()
     if config.get("safeguards", True) and scope == "system":
         return False
@@ -860,8 +860,10 @@ def reg_read(key_path: str, value_name: str = "") -> RegistryValue:
 
 
 def reg_write(
-    key_path: str, value_name: str, value_data: Any, value_type: str = "REG_SZ"
+    key_path: str, value_name: str, value_data: Any, value_type: str = "REG_SZ", confirm: bool = False
 ) -> bool:
+    check_destructive("registry.write", confirm)
+    log_action("windows.system", "reg_write", {"key_path": key_path, "value_name": value_name}, {})
     _check_safeguard(key_path)
     hive, subkey = _parse_key_path(key_path)
     if value_type not in TYPE_MAP:
@@ -875,7 +877,9 @@ def reg_write(
         raise FileNotFoundError(f"Registry key not found: {key_path}")
 
 
-def reg_delete(key_path: str, value_name: str) -> bool:
+def reg_delete(key_path: str, value_name: str, confirm: bool = False) -> bool:
+    check_destructive("registry.write", confirm)
+    log_action("windows.system", "reg_delete", {"key_path": key_path, "value_name": value_name}, {})
     _check_safeguard(key_path)
     hive, subkey = _parse_key_path(key_path)
     try:
@@ -931,7 +935,9 @@ def reg_key_exists(key_path: str) -> bool:
         return False
 
 
-def reg_create_key(key_path: str) -> bool:
+def reg_create_key(key_path: str, confirm: bool = False) -> bool:
+    check_destructive("registry.write", confirm)
+    log_action("windows.system", "reg_create_key", {"key_path": key_path}, {})
     _check_safeguard(key_path)
     hive, subkey = _parse_key_path(key_path)
     try:
@@ -942,7 +948,9 @@ def reg_create_key(key_path: str) -> bool:
         return False
 
 
-def reg_delete_key(key_path: str, recursive: bool = False) -> bool:
+def reg_delete_key(key_path: str, recursive: bool = False, confirm: bool = False) -> bool:
+    check_destructive("registry.write", confirm)
+    log_action("windows.system", "reg_delete_key", {"key_path": key_path, "recursive": recursive}, {})
     _check_safeguard(key_path)
     hive, subkey = _parse_key_path(key_path)
 

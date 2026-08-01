@@ -10,6 +10,7 @@ import os
 @dataclass
 class SystemMCPConfig:
     safeguards: bool = True
+    unattended_mode: bool = False
     action_timeout: float = 10.0
     retry_attempts: int = 2
     retry_delay: float = 0.5
@@ -36,6 +37,7 @@ class SystemMCPConfig:
 
         return cls(
             safeguards=_get_bool("SYSTEM_MCP_SAFEGUARDS", True),
+            unattended_mode=_get_bool("SYSTEM_MCP_UNATTENDED", False),
             action_timeout=_get_float("SYSTEM_MCP_ACTION_TIMEOUT", 10.0),
             retry_attempts=_get_int("SYSTEM_MCP_RETRY_ATTEMPTS", 2),
             retry_delay=_get_float("SYSTEM_MCP_RETRY_DELAY", 0.5),
@@ -55,7 +57,6 @@ def get_config() -> SystemMCPConfig:
 
 
 def configure(**kwargs):
-    global _global_config
     for k, v in kwargs.items():
         if hasattr(_global_config, k):
             setattr(_global_config, k, v)

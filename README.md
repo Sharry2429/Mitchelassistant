@@ -2,7 +2,7 @@
 
 **System-MCP** is an incredibly powerful, cross-platform Model Context Protocol (MCP) server that seamlessly bridges an LLM directly to your **Windows PC** and **Android Phone**.
 
-With over **100+ native capabilities**, it transforms an AI assistant from a simple chatbot into an autonomous OS-level operator that can control your desktop, interact with your mobile apps, place phone calls, inject UI overlays, and much more.
+With over **100+ native capabilities**, it transforms an AI assistant from a simple chatbot into an autonomous OS-level operator that can control your desktop and interact with your mobile apps.
 
 ---
 
@@ -32,7 +32,7 @@ The architecture is designed to maximize capability while driving down API token
    - A unified MCP server running on standard `stdio`.
    - Uses reflection to dynamically discover and expose all Python functions within the `windows.*` and `android.*` categorical modules as MCP tools.
 
-2. **Dual-Engine Orchestration (`mitchell_assistant.py`)**
+2. **Dual-Engine Orchestration (`mitchell.py`)**
    - **Luna Router:** A highly cost-efficient `gpt-5.6-luna` model receives your prompt and determines the operational logic.
    - **Antigravity (AGY) Executor:** A powerful `Gemini 3 Pro` agent acts as the workhorse, taking the plan from Luna and using the Python SDK to execute the heavy tool calls across the OS.
    - This prevents expensive context-bloat and splits the brain between an intelligent planner and an autonomous execution agent.
@@ -41,11 +41,15 @@ The architecture is designed to maximize capability while driving down API token
 
 ## 🚀 Getting Started
 
+### Prerequisites
+- Python 3.10+
+- Node.js (for the `browsermcp` browser integration)
+
 1. **Start the MCP Server:**
    You can attach `system_mcp/mcp_server.py` to any MCP-compatible client (like Claude Desktop) via `stdio`.
 
 2. **Run Dual-Engine Mitchell:**
    Use the Python orchestration script to run tasks using the Zero-Cost architecture:
    ```bash
-   python mitchell_assistant.py
+   python mitchell.py
    ```

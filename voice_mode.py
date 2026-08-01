@@ -62,7 +62,7 @@ class VoiceMode:
         try:
             with open(".mitchell/boot.md", "r", encoding="utf-8") as f:
                 sys_prompt = f.read()
-        except:
+        except IOError:
             sys_prompt = "You are Mitchell, a dry, witty AI."
 
         messages = [
@@ -90,7 +90,7 @@ class VoiceMode:
                 res = requests.post(url_ai_credits, headers=test_headers, json=test_data, timeout=5)
                 if res.status_code == 200:
                     return res.json()["choices"][0]["message"]["content"]
-            except:
+            except requests.exceptions.RequestException:
                 # Silently fallback to Groq if AICredits endpoint is wrong/unreachable
                 pass
         
@@ -100,6 +100,7 @@ class VoiceMode:
                 return res.json()["choices"][0]["message"]["content"]
             return "My brain API returned an error."
         except Exception as e:
+            print(f"Error querying Groq: {e}")
             return "I am having connection issues."
 
     def process_audio(self, audio_data):

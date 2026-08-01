@@ -266,7 +266,6 @@ def get_screen_size() -> tuple[int, int]:
 def set_brightness(level: int) -> bool:
     if not (0 <= level <= 100):
         raise ValueError("Brightness must be between 0 and 100")
-    config = get_config()
 
     ps_command = f"(Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightnessMethods).WmiSetBrightness(1,{level})"
     try:
@@ -493,7 +492,7 @@ def dns_lookup(domain: str) -> DnsResult:
         addrs = socket.getaddrinfo(domain, None)
         ips = list(set([addr[4][0] for addr in addrs]))
         return DnsResult(domain=domain, ips=ips)
-    except Exception as e:
+    except Exception:
         return DnsResult(domain=domain, ips=[])
 
 

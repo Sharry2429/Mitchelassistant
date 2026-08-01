@@ -80,8 +80,6 @@ def configure(
     Returns:
         The updated configuration.
     """
-    global _config
-
     if safeguards is not None:
         _config.safeguards = safeguards
     if powershell_timeout is not None:

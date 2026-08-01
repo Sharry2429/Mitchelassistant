@@ -3,7 +3,6 @@ from fuzzywuzzy import process, fuzz
 from pathlib import Path
 from system_mcp.windows.config import get_config
 from system_mcp.windows.types import CommandResult
-from system_mcp.windows.types import FileInfo
 from system_mcp.windows.types import FileInfo, DirectoryListing
 from typing import Optional, List, Dict
 from urllib.parse import urlparse
@@ -72,12 +71,13 @@ def _find_window(title: str, fuzzy: bool = True) -> int:
 
 def open_app(name: str) -> CommandResult:
     """Open app by name. Use PowerShell Start-Process, or search Start Menu shortcuts."""
-    config = get_config()
-
     # Try simple start first
     try:
+        env = os.environ.copy()
+        env["_APP_NAME_TO_START"] = name
         subprocess.Popen(
-            ["powershell", "-Command", f"Start-Process '{name}'"], shell=True
+            ["powershell", "-NoProfile", "-Command", "Start-Process $env:_APP_NAME_TO_START"],
+            env=env
         )
         return CommandResult(
             success=True, output=f"Launched {name}", error="", exit_code=0

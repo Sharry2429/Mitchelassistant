@@ -27,7 +27,7 @@ def set_volume(level: int) -> MCPResult:
     """Sets the media volume to a specific level."""
     log_action("audio", "set_volume", {"level": level}, {})
     try:
-        result = adb.shell(["media", "volume", "--set", str(level)])
+        adb.shell(["media", "volume", "--set", str(level)])
         return MCPResult.success(True)
     except Exception as e:
         return MCPResult.fail(str(e))

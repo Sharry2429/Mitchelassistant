@@ -1,6 +1,5 @@
 from ctypes import wintypes
 from fuzzywuzzy import process
-from system_mcp.windows.config import get_config
 from system_mcp.windows.core.powershell import execute
 from system_mcp.windows.core.screenshot import (
     capture_screen,
@@ -44,8 +43,6 @@ user32 = ctypes.windll.user32
 
 
 def snapshot(use_vision: bool = False, use_annotation: bool = True) -> DesktopState:
-    config = get_config()
-
     windows = get_windows()
     active_window = get_active_window()
     displays = get_displays()
@@ -731,7 +728,7 @@ def send_notification(
     """Send a Windows toast notification."""
     duration_ms = 3000 if duration == "short" else 10000
 
-    ps_script = f"""
+    ps_script = """
     Add-Type -AssemblyName System.Windows.Forms
     $notify = New-Object System.Windows.Forms.NotifyIcon
     $notify.Icon = [System.Drawing.SystemIcons]::Information

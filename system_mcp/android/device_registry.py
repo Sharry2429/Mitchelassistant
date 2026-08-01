@@ -48,8 +48,7 @@ def start_registry():
     # ADB over TLS mDNS service type
     SERVICE_TYPE = "_adb-tls-connect._tcp.local."
 
-    logger.info(f"Starting mDNS listener for {SERVICE_TYPE}")
-    browser = ServiceBrowser(zeroconf, SERVICE_TYPE, listener)
+    ServiceBrowser(zeroconf, SERVICE_TYPE, listener)
 
     try:
         while True:

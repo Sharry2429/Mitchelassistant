@@ -1,5 +1,5 @@
 import system_mcp.windows as wc
-import sys
+
 
 def main():
     print("==================================================")

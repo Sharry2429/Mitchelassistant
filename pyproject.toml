@@ -35,15 +35,19 @@ dependencies = [
 mcp = ["fastmcp>=2.0"]
 pretty = ["tabulate"]
 all = ["fastmcp>=2.0", "tabulate"]
+dev = ["pytest>=7.0.0"]
 
 [project.scripts]
 system-mcp = "system_mcp.cli:main"
 system-mcp-server = "system_mcp.mcp_server:main"
-mitchell = "mitchell:cli"
+mitchell = "system_mcp.mitchell:cli"
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["mitchell", "voice_mode", "tts_loop", "test_mitchell"]
 
 [tool.setuptools.packages.find]
 where = ["."]

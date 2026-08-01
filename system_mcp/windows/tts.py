@@ -5,7 +5,6 @@ Local ONNX-based Text-to-Speech using Kokoro.
 
 import os
 import urllib.request
-from typing import Optional, List, Dict, Any
 from system_mcp.core.result import MCPResult
 
 # Lazy-loaded globals

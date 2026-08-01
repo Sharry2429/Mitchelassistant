@@ -1,4 +1,4 @@
-import sys
+
 from system_mcp.windows.tts import speak
 from system_mcp.windows.stt import listen_and_transcribe
 
