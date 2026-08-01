@@ -1,4 +1,4 @@
-from system_mcp.core.tokens import analyze_prompt, compress_history, estimate_tokens
+from mitchell.core.tokens import analyze_prompt, compress_history, estimate_tokens
 
 
 def test_estimate_tokens():

@@ -1,4 +1,4 @@
-import system_mcp.windows as wc
+import mitchell.windows as wc
 
 
 def main():

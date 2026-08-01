@@ -9,7 +9,7 @@ import requests
 import sounddevice as sd
 import soundfile as sf
 
-from system_mcp.windows.tts import speak
+from mitchell.windows.tts import speak
 
 # Configuration
 SAMPLERATE = 16000

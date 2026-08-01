@@ -1,5 +1,5 @@
 [project]
-name = "system-mcp"
+name = "mitchell"
 version = "0.1.0"
 description = "Control your own devices from Python or via MCP. Features unified Windows and Android automation (USB-once/wireless-forever)."
 readme = "README.md"
@@ -18,7 +18,7 @@ dependencies = [
     "fuzzywuzzy>=0.18.0",
     "python-levenshtein>=0.27.0",
     "markdownify>=1.1.0",
-    "psutil>=7.0.0",
+    "psutil>=5.9.0",
     "pywin32>=310; sys_platform == 'win32'",
     "pyvda>=0.6.0; sys_platform == 'win32'",
     
@@ -29,6 +29,10 @@ dependencies = [
     "cryptography>=41.0.0",
     "openai",
     "mcp",
+    "playwright",
+    "rich",
+    "prompt_toolkit>=3.0.0",
+    "textual>=0.40.0",
 ]
 
 [project.optional-dependencies]
@@ -38,9 +42,10 @@ all = ["fastmcp>=2.0", "tabulate"]
 dev = ["pytest>=7.0.0"]
 
 [project.scripts]
-system-mcp-server = "system_mcp.mcp_server:main"
-mitchell = "system_mcp.mitchell:cli"
+system-mcp-server = "mitchell.mcp_server:main"
+mitchell = "mitchell.core.chat_interface:main"
 mitchell-task = "mitchell_task:main"
+mitchell-dashboard = "mitchell.core.dashboard:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -51,4 +56,4 @@ py-modules = ["voice_mode", "tts_loop", "mitchell_task"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["system_mcp*"]
+include = ["mitchell*"]

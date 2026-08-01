@@ -1,55 +1,44 @@
-# System-MCP
+# Mitchell Command Center
 
-**System-MCP** is an incredibly powerful, cross-platform Model Context Protocol (MCP) server that seamlessly bridges an LLM directly to your **Windows PC** and **Android Phone**.
+**Mitchell** is an autonomous AI agent integrated directly into a high-density, real-time Terminal UI (TUI). It acts as an OS-level operator capable of seamlessly bridging deep control over your **Windows PC** and **Android Phone** right from your terminal.
 
-With over **100+ native capabilities**, it transforms an AI assistant from a simple chatbot into an autonomous OS-level operator that can control your desktop and interact with your mobile apps.
+Mitchell is built for raw speed, dense analytics, and extreme automation, wrapping a powerful Model Context Protocol (MCP) server with over 100+ native system capabilities.
 
 ---
 
 ## 🌟 Core Features
 
-### 💻 Windows Native Control
-System-MCP acts as a deeply integrated local administrator for Windows, exposing tools for complete desktop automation:
-- **Application Management:** Launch executables, focus/minimize/maximize windows, close apps, and list installed software.
-- **System & Power:** Control system volume, brightness, mute states, get active audio devices, lock screen, sleep, restart, or shutdown.
-- **Files & Data:** Full CRUD filesystem access, move/copy files, execute raw PowerShell/CMD commands, and read/write to the Windows Registry.
-- **Vision & Input:** Capture screenshots (with multi-monitor support), move the mouse, simulate clicks, type text, and fire complex keyboard hotkeys.
-- **Network & Services:** Ping servers, get active network interfaces, check firewall status, and manage Windows Services (start/stop/list).
+### 💻 TUI Dashboard Command Center
+Powered by `Textual` and `Rich`, Mitchell abandons traditional chat interfaces for a hyper-active command center.
+- **Live System Reality:** Constantly streaming metrics tracking the top 8 highest resource-consuming processes (CPU/RAM) on your machine.
+- **Network Node Monitor:** Live Tailscale IP tracking for both the Windows Host and connected Android devices.
+- **Live Model Dropdown Selector:** Instantly cycle between cutting-edge lightning-fast models (like Gemini Flash, DeepSeek Flash, and Seed Flash) via an integrated UI dropdown without restarting the agent.
 
-### 📱 Android "God-Mode"
-Via a native ADB bridge, System-MCP grants unparalleled control over an Android device without requiring an active app to be open:
-- **Device Management:** Reboot, turn screen on/off, wake device, read system properties, and manage packages.
-- **Hardware & Vision:** Pull live UI view hierarchies, tap coordinates, swipe, grab raw screen frames, and perform on-device OCR to "read" the screen.
-- **Filesystem & Network:** Push/pull files, list directories, check Wi-Fi status, and toggle airplane mode.
+### ⚡ 100% Native Real-Time Execution
+Mitchell evaluates tasks and triggers multi-step tool executions live on your screen. The background daemon architecture has been completely gutted in favor of hyper-responsive, synchronous action. Watch the agent stream its tool usage and thought processes natively within the main console.
 
----
+### 🛡️ Guardian Self-Healing Toolkit
+Mitchell features a global Guardian error-trapping wrapper. If a catastrophic fatal exception occurs within the python execution thread, the application will elegantly catch it, present the traceback, and summon an LLM locally to diagnose the error context and suggest an immediate fix.
 
-## 🛠 Zero-Cost Architecture & Tech Stack
+### 📱 Android "God-Mode" via ADB
+Upon booting the TUI, Mitchell automatically handles wireless ADB setup in the background to connect to your phone. It grants unparalleled automation:
+- Pull live UI view hierarchies, grab raw screen frames, tap coordinates, swipe, and trigger device unlocks effortlessly.
 
-The architecture is designed to maximize capability while driving down API token cost to zero for routing and standard operation:
-
-1. **Python `FastMCP` Server (`mcp_server.py`)**
-   - A unified MCP server running on standard `stdio`.
-   - Uses reflection to dynamically discover and expose all Python functions within the `windows.*` and `android.*` categorical modules as MCP tools.
-
-2. **Dual-Engine Orchestration (`mitchell.py`)**
-   - **Luna Router:** A highly cost-efficient `gpt-5.6-luna` model receives your prompt and determines the operational logic.
-   - **Antigravity (AGY) Executor:** A powerful `Gemini 3 Pro` agent acts as the workhorse, taking the plan from Luna and using the Python SDK to execute the heavy tool calls across the OS.
-   - This prevents expensive context-bloat and splits the brain between an intelligent planner and an autonomous execution agent.
+### ⚙️ Windows Native Control
+Complete local administrator tooling:
+- **Application & Power:** Manage executables, lock the screen, sleep, volume/brightness, and list active software.
+- **Vision & Input:** Multi-monitor screenshots, synthetic keyboard hotkeys, and mouse control.
+- **System:** Raw PowerShell execution, Registry editing, file CRUD operations, and pinging servers.
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Python 3.10+
-- Node.js (for the `browsermcp` browser integration)
+Ensure all dependencies are installed via `pip install -e .`
 
-1. **Start the MCP Server:**
-   You can attach `system_mcp/mcp_server.py` to any MCP-compatible client (like Claude Desktop) via `stdio`.
+To launch the real-time TUI Command Center, simply run:
+```bash
+mitchell
+```
 
-2. **Run Dual-Engine Mitchell:**
-   Use the Python orchestration script to run tasks using the Zero-Cost architecture:
-   ```bash
-   python -m system_mcp.mitchell
-   ```
+To exit the UI, simply interrupt (Ctrl+C).

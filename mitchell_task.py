@@ -1,101 +1,37 @@
 import argparse
-import asyncio
-import os
 import sys
 import uuid
+from typing import Optional
 
-from dotenv import load_dotenv
-from google.antigravity import Agent, CapabilitiesConfig, LocalAgentConfig
-from google.antigravity.types import CustomSystemInstructions, McpStdioServer
+from mitchell.core.audit import TaskScope, set_task_scope
+from mitchell.core.tasks import Task, TaskState
 
-from system_mcp.core.audit import TaskScope, set_task_scope
-from system_mcp.core.config import configure
-from system_mcp.core.tasks import Task, TaskState
-
-
-async def run_task(instruction: str, scope: TaskScope):
-    load_dotenv()
-    api_key = os.environ.get("AICREDITS_API_KEY")
-    if not api_key:
-        print("Error: AICREDITS_API_KEY not found in environment.")
-        sys.exit(1)
-        
-    # Setup unattended mode
-    configure(unattended_mode=True)
-    set_task_scope(scope)
-    
-    task = Task(id=str(uuid.uuid4()), instruction=instruction)
-    task.state = TaskState.RUNNING
-    task.save()
-    
-    # Configure AGY for tool execution
-    agy_config = LocalAgentConfig(
-        system_instructions=CustomSystemInstructions(
-            text=f"""You are Mitchell AI, running in Autonomous Task Mode.
-Your task ID is: {task.id}
-Your task is: {instruction}
-
-You are in Planning Mode. You must follow this lifecycle to avoid hallucination and ensure stability:
-1. **Plan & Checklist:** Before executing modifying actions, write a detailed technical plan and checklist into a `task.md` file in the working directory.
-2. **Execute:** Execute your checklist step-by-step using your MCP tools. 
-3. **Verify:** VERIFY every action using verification tools or reading back state. Update `task.md` as you make progress.
-4. **Walkthrough:** Once finished, create a `walkthrough.md` artifact summarizing the changes made and the validation results.
-"""
-        ),
-        capabilities=CapabilitiesConfig(),
-        mcp_servers=[
-            McpStdioServer(
-                command=sys.executable,
-                args=["-m", "system_mcp.mcp_server"]
-            ),
-            McpStdioServer(
-                command="npx",
-                args=["-y", "@browsermcp/mcp@0.1.3"]
-            )
-        ]
-    )
-    
-    print(f"🚀 Starting autonomous task: {instruction}")
-    print(f"Task ID: {task.id}")
-    
-    content_str = ""
-    try:
-        async with Agent(agy_config) as agy_agent:
-            agent_response = await agy_agent.chat(instruction)
-            async for token in agent_response:
-                sys.stdout.write(token)
-                sys.stdout.flush()
-                content_str += token
-            print("\n\n✅ Task execution completed.")
-        task.state = TaskState.COMPLETED
-    except Exception as e:
-        print(f"\n\n❌ Task failed: {e}")
-        task.state = TaskState.FAILED
-    finally:
-        import time
-        task.completed_at = time.time()
-        # In a full implementation, we'd parse content_str to extract steps
-        task.save()
+def ping_supervisor(task_id: str):
+    # This will be implemented in supervisor_ipc in a later phase.
+    print(f"Task {task_id} queued for the worker pool.")
 
 def main():
     parser = argparse.ArgumentParser(description="Mitchell Autonomous Task Runner")
     parser.add_argument("--task", type=str, required=True, help="Task instruction")
-    parser.add_argument("--allow-action", type=str, action="append", default=[], help="Allowed actions prefix (default: empty)")
-    parser.add_argument("--allow-path", type=str, action="append", default=[], help="Allowed path globs (default: empty)")
+    parser.add_argument("--allow-action", type=str, action="append", default=[], help="Allowed actions prefix")
+    parser.add_argument("--allow-path", type=str, action="append", default=[], help="Allowed path globs")
     args = parser.parse_args()
-    
-    # By default argparse append action doesn't override the default, it appends to it.
-    # If the default is empty, args.allow_action is exactly what the user passed.
-    allowed_actions = args.allow_action
-    allowed_paths = args.allow_path
-    
 
     scope = TaskScope(
-        allowed_actions=allowed_actions,
-        allowed_paths=allowed_paths
+        allowed_actions=args.allow_action,
+        allowed_paths=args.allow_path
     )
     
-    asyncio.run(run_task(args.task, scope))
+    # In full implementation, scope might be stored inside task or elsewhere, 
+    # but for now we follow the thin client model.
+    task_id = str(uuid.uuid4())
+    task = Task(id=task_id, instruction=args.task)
+    task.state = TaskState.PENDING
+    task.save()
+    
+    print(f"🚀 Task created: {args.task}")
+    print(f"Task ID: {task.id}")
+    ping_supervisor(task.id)
 
 if __name__ == "__main__":
     main()

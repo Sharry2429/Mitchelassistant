@@ -2,14 +2,14 @@ import json
 
 import pytest
 
-from system_mcp.core.audit import (
+from mitchell.core.audit import (
     DESTRUCTIVE,
     check_destructive,
     check_sensitive,
     get_log,
     log_action,
 )
-from system_mcp.core.errors import RequiresConfirmation
+from mitchell.core.errors import RequiresConfirmation
 
 
 # Mock config for testing
@@ -20,13 +20,13 @@ class MockConfig:
 
 @pytest.fixture
 def mock_config(monkeypatch):
-    from system_mcp.core import audit
+    from mitchell.core import audit
     monkeypatch.setattr(audit, "get_config", lambda: MockConfig())
 
 @pytest.fixture
 def mock_log_path(tmp_path, monkeypatch):
     log_file = tmp_path / "audit.jsonl"
-    monkeypatch.setattr("system_mcp.core.audit._get_log_path", lambda: log_file)
+    monkeypatch.setattr("mitchell.core.audit._get_log_path", lambda: log_file)
     return log_file
 
 def test_log_action(mock_log_path):

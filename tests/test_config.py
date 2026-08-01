@@ -1,4 +1,4 @@
-from system_mcp.core.config import SystemMCPConfig, configure, get_config
+from mitchell.core.config import SystemMCPConfig, configure, get_config
 
 
 def test_default_config():

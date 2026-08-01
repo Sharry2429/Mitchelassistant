@@ -1,0 +1,52 @@
+"""
+mitchell.mcp_server
+Unified MCP Server exposing both Windows and Android modules under a single namespace.
+"""
+
+import importlib
+import inspect
+
+from fastmcp import FastMCP
+
+# Initialize MCP Server
+mcp = FastMCP("System-MCP")
+
+
+def register_platform_tools(platform: str, module_names: list[str]):
+    for mod_name in module_names:
+        try:
+            mod = importlib.import_module(f"mitchell.{platform}.{mod_name}")
+            for name, func in inspect.getmembers(mod, inspect.isfunction):
+                if not name.startswith("_"):
+                    # Prefix the tool name with the platform and module for a unified namespace
+                    tool_name = f"{platform}_{mod_name}_{name}"
+                    func.__name__ = tool_name
+                    # FastMCP tool registration
+                    try:
+                        mcp.add_tool(func)
+                    except (ValueError, TypeError, Exception) as e:
+                        print(f"Skipping tool {tool_name}: {e}")
+        except ImportError as e:
+            print(f"ImportError loading {platform}.{mod_name}: {e}")
+
+
+# Windows Modules
+windows_modules = ["system", "hardware", "ui", "apps", "tts", "stt"]
+
+# Android Modules
+android_modules = ["system", "hardware", "interaction", "apps", "communication"]
+
+# Core Modules
+core_modules = ["memory", "verify", "tasks"]
+
+register_platform_tools("windows", windows_modules)
+register_platform_tools("android", android_modules)
+register_platform_tools("core", core_modules)
+
+
+def main():
+    mcp.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,4 @@
+"""
+mitchell.core
+Shared components.
+"""
