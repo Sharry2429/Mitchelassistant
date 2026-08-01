@@ -96,9 +96,19 @@ async def main():
             user_input = await session.prompt_async("\nMitchell> ")
             if not user_input.strip():
                 continue
-            if user_input.lower() in ["exit", "quit"]:
+            if user_input.lower() in ["exit", "quit", "/exit", "/quit"]:
                 break
                 
+            force_delegate = False
+            if user_input.lower().startswith("/plan ") or user_input.lower().startswith("/goal "):
+                cmd, _, task_desc = user_input.partition(" ")
+                task_desc = task_desc.strip()
+                if cmd.lower() == "/plan":
+                    user_input = f"Create a detailed implementation_plan.md for the following task, then ask for approval before taking any action. Task: {task_desc}"
+                else:
+                    user_input = f"You are in Autonomous Task Mode. Goal: {task_desc}\n1. Create a task.md checklist.\n2. Execute the steps.\n3. Verify.\n4. Create a walkthrough.md."
+                force_delegate = True
+
             history.append({"role": "user", "content": user_input})
             history = compress_history(history, threshold=10)
             
@@ -121,12 +131,14 @@ async def main():
             estimated = sum(estimate_tokens(m["content"]) for m in router_messages)
             log_token_usage("router", user_input, estimated)
             
-            # 1. Query Luna Model
-            router_response = await llm.chat.completions.create(
-                model="openai/gpt-5.6-luna", messages=router_messages
-            )
-            
-            router_text = router_response.choices[0].message.content.strip()
+            # 1. Query Luna Model (if not forced)
+            if force_delegate:
+                router_text = "[DELEGATE]"
+            else:
+                router_response = await llm.chat.completions.create(
+                    model="openai/gpt-5.6-luna", messages=router_messages
+                )
+                router_text = router_response.choices[0].message.content.strip()
             
             # 2. Check for tool delegation
             if "[DELEGATE]" not in router_text:

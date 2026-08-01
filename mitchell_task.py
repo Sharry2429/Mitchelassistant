@@ -35,12 +35,11 @@ async def run_task(instruction: str, scope: TaskScope):
 Your task ID is: {task.id}
 Your task is: {instruction}
 
-You must follow this lifecycle:
-1. Plan your steps and write them down.
-2. Execute each step using your MCP tools.
-3. VERIFY every action using verification tools or reading back state.
-4. If verification fails, retry.
-5. Report your findings at the end.
+You are in Planning Mode. You must follow this lifecycle to avoid hallucination and ensure stability:
+1. **Plan & Checklist:** Before executing modifying actions, write a detailed technical plan and checklist into a `task.md` file in the working directory.
+2. **Execute:** Execute your checklist step-by-step using your MCP tools. 
+3. **Verify:** VERIFY every action using verification tools or reading back state. Update `task.md` as you make progress.
+4. **Walkthrough:** Once finished, create a `walkthrough.md` artifact summarizing the changes made and the validation results.
 """
         ),
         capabilities=CapabilitiesConfig(),
