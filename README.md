@@ -1,44 +1,50 @@
-# Mitchell Command Center
+# Mitchell
 
-**Mitchell** is an autonomous AI agent integrated directly into a high-density, real-time Terminal UI (TUI). It acts as an OS-level operator capable of seamlessly bridging deep control over your **Windows PC** and **Android Phone** right from your terminal.
+Mitchell is an autonomous AI agent framework featuring a real-time Terminal User Interface (TUI) and an integrated Model Context Protocol (MCP) server. It operates as an OS-level agent capable of controlling both Windows host environments and Android devices via ADB.
 
-Mitchell is built for raw speed, dense analytics, and extreme automation, wrapping a powerful Model Context Protocol (MCP) server with over 100+ native system capabilities.
+Designed for high-performance automation, Mitchell bypasses traditional conversational interfaces in favor of a synchronous command center, providing native tool execution and live system monitoring.
 
----
+## Features
 
-## 🌟 Core Features
+### Terminal User Interface (TUI)
+Built on `Textual` and `Rich`, the Mitchell TUI provides a structured environment for agent interaction:
+- **Process Monitoring:** Real-time tracking of high-resource processes (CPU/Memory).
+- **Network Telemetry:** Active monitoring of IP bindings for both the local host and connected mobile devices.
+- **Dynamic Model Selection:** An integrated UI dropdown allows seamless switching between high-speed models (e.g., Gemini Flash, DeepSeek Flash, Seed Flash) and standard models during runtime.
 
-### 💻 TUI Dashboard Command Center
-Powered by `Textual` and `Rich`, Mitchell abandons traditional chat interfaces for a hyper-active command center.
-- **Live System Reality:** Constantly streaming metrics tracking the top 8 highest resource-consuming processes (CPU/RAM) on your machine.
-- **Network Node Monitor:** Live Tailscale IP tracking for both the Windows Host and connected Android devices.
-- **Live Model Dropdown Selector:** Instantly cycle between cutting-edge lightning-fast models (like Gemini Flash, DeepSeek Flash, and Seed Flash) via an integrated UI dropdown without restarting the agent.
+### Synchronous Execution Engine
+Mitchell evaluates natural language instructions and orchestrates multi-step tool executions directly on the main application thread. This synchronous approach ensures immediate response times and allows users to monitor the agent's internal tool usage and logic streams natively within the console.
 
-### ⚡ 100% Native Real-Time Execution
-Mitchell evaluates tasks and triggers multi-step tool executions live on your screen. The background daemon architecture has been completely gutted in favor of hyper-responsive, synchronous action. Watch the agent stream its tool usage and thought processes natively within the main console.
+### Guardian Self-Healing
+The framework implements a global error-trapping wrapper. In the event of a fatal exception during execution, the Guardian module intercepts the traceback and invokes a local LLM to diagnose the failure and propose automated remediations.
 
-### 🛡️ Guardian Self-Healing Toolkit
-Mitchell features a global Guardian error-trapping wrapper. If a catastrophic fatal exception occurs within the python execution thread, the application will elegantly catch it, present the traceback, and summon an LLM locally to diagnose the error context and suggest an immediate fix.
+### Android Device Automation
+Mitchell manages wireless ADB connections automatically upon initialization. The Android integration supports:
+- Retrieving live UI view hierarchies.
+- Capturing and processing raw screen frames.
+- Synthesizing touch events (taps, swipes).
+- Automated device unlocking.
 
-### 📱 Android "God-Mode" via ADB
-Upon booting the TUI, Mitchell automatically handles wireless ADB setup in the background to connect to your phone. It grants unparalleled automation:
-- Pull live UI view hierarchies, grab raw screen frames, tap coordinates, swipe, and trigger device unlocks effortlessly.
+### Windows Host Control
+The agent exercises local administrator privileges to execute host operations:
+- **Application Management:** Process lifecycle control and active software auditing.
+- **Input Synthesis:** Multi-monitor screen capture, automated keyboard sequences, and precise mouse control.
+- **System Operations:** PowerShell script execution, Windows Registry modifications, file system I/O, and network diagnostics.
 
-### ⚙️ Windows Native Control
-Complete local administrator tooling:
-- **Application & Power:** Manage executables, lock the screen, sleep, volume/brightness, and list active software.
-- **Vision & Input:** Multi-monitor screenshots, synthetic keyboard hotkeys, and mouse control.
-- **System:** Raw PowerShell execution, Registry editing, file CRUD operations, and pinging servers.
+## Installation
 
----
+Mitchell requires Python 3.10+ and can be installed locally.
 
-## 🚀 Getting Started
+```bash
+pip install -e .
+```
 
-Ensure all dependencies are installed via `pip install -e .`
+## Usage
 
-To launch the real-time TUI Command Center, simply run:
+Start the interactive terminal interface:
+
 ```bash
 mitchell
 ```
 
-To exit the UI, simply interrupt (Ctrl+C).
+To exit the interface, use `Ctrl+C`.
