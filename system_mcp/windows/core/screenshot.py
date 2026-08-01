@@ -1,7 +1,8 @@
-import io
 import ctypes
 import ctypes.wintypes
-from typing import Optional, Tuple, List, Any
+import io
+from typing import Any
+
 from PIL import Image
 
 
@@ -51,14 +52,14 @@ SRCCOPY = 0x00CC0020
 DIB_RGB_COLORS = 0
 
 
-def get_screen_size() -> Tuple[int, int]:
+def get_screen_size() -> tuple[int, int]:
     """Returns the primary screen width and height."""
     width = user32.GetSystemMetrics(SM_CXVIRTUALSCREEN)
     height = user32.GetSystemMetrics(SM_CYVIRTUALSCREEN)
     return width, height
 
 
-def get_monitor_rects() -> List[Tuple[int, int, int, int]]:
+def get_monitor_rects() -> list[tuple[int, int, int, int]]:
     """Returns a list of monitor rectangles: (left, top, right, bottom)."""
     monitors = []
 
@@ -78,7 +79,7 @@ def get_monitor_rects() -> List[Tuple[int, int, int, int]]:
     return monitors
 
 
-def capture_screen_gdi(region: Optional[Tuple[int, int, int, int]] = None) -> Any:
+def capture_screen_gdi(region: tuple[int, int, int, int] | None = None) -> Any:
     """Captures the screen using GDI (ctypes)."""
     if region is None:
         left = user32.GetSystemMetrics(SM_XVIRTUALSCREEN)
@@ -128,7 +129,7 @@ def capture_screen_gdi(region: Optional[Tuple[int, int, int, int]] = None) -> An
 
 
 def capture_screen_dxcam(
-    region: Optional[Tuple[int, int, int, int]] = None, monitor: int = 0
+    region: tuple[int, int, int, int] | None = None, monitor: int = 0
 ) -> Any:
     """Captures the screen using DXCam. Requires dxcam to be installed."""
     if not DXCAM_AVAILABLE:
@@ -150,7 +151,7 @@ def capture_screen_dxcam(
 
 
 def capture_screen(
-    region: Optional[Tuple[int, int, int, int]] = None, monitor: Optional[int] = None
+    region: tuple[int, int, int, int] | None = None, monitor: int | None = None
 ) -> Any:
     """
     Captures the screen based on configuration (DXCam or GDI).

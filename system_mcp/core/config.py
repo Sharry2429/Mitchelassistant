@@ -3,8 +3,8 @@ system_mcp.core.config
 Central configuration for System-MCP.
 """
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 
 
 @dataclass

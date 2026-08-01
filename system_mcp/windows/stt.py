@@ -5,8 +5,11 @@ Speech-to-Text using Groq's Whisper API.
 
 import os
 import tempfile
+
 import requests
+
 from system_mcp.core.result import MCPResult
+
 
 def listen_and_transcribe(duration_seconds: int = 5) -> MCPResult:
     """
@@ -72,4 +75,4 @@ def listen_and_transcribe(duration_seconds: int = 5) -> MCPResult:
         return MCPResult.success(transcript)
 
     except Exception as e:
-        return MCPResult.fail(f"STT failed: {str(e)}")
+        return MCPResult.fail(f"STT failed: {e!s}")

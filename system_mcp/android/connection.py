@@ -3,26 +3,25 @@ system_mcp.android.connection
 Provides access to the active Android device for ADB and uiautomator2.
 """
 
+import json
+import os
 import subprocess
+
 import uiautomator2 as u2
-from typing import List, Optional
 
 from system_mcp.core.errors import DeviceOffline, SystemMCPError
-
-import os
-import json
 
 _active_serial = None
 _u2_device = None
 _config_path = os.path.expanduser("~/.system_mcp_adb_wifi.json")
 
 
-def _get_saved_wifi_ip() -> Optional[str]:
+def _get_saved_wifi_ip() -> str | None:
     if os.path.exists(_config_path):
         try:
             with open(_config_path, "r") as f:
                 return json.load(f).get("wifi_ip")
-        except (IOError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             pass
     return None
 
@@ -31,7 +30,7 @@ def _save_wifi_ip(ip: str):
     try:
         with open(_config_path, "w") as f:
             json.dump({"wifi_ip": ip}, f)
-    except IOError:
+    except OSError:
         pass
 
 
@@ -39,7 +38,7 @@ _TAILSCALE_HOST = os.environ.get("SYSTEM_MCP_TAILSCALE_HOST")
 _TAILSCALE_PORT = os.environ.get("SYSTEM_MCP_TAILSCALE_PORT", "5555")
 
 
-def _connect_tailscale() -> Optional[str]:
+def _connect_tailscale() -> str | None:
     """Try connecting to the device over its Tailscale address, if configured."""
     host = _TAILSCALE_HOST
     if not host:
@@ -169,8 +168,8 @@ def get_active_serial() -> str:
     return _active_serial
 
 
-import time
 import logging
+import time
 
 
 def ensure_connected(retry_seconds: int = 5, max_wait: int = 60) -> str:
@@ -187,7 +186,7 @@ def ensure_connected(retry_seconds: int = 5, max_wait: int = 60) -> str:
             time.sleep(retry_seconds)
 
 
-def get_adb_prefix() -> List[str]:
+def get_adb_prefix() -> list[str]:
     """Returns the base adb command list targeting the active device."""
     serial = ensure_connected()
     return ["adb", "-s", serial]

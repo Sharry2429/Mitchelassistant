@@ -1,11 +1,11 @@
-from typing import Dict
+import urllib.parse
 from typing import Any
+
 from system_mcp.android import adb
 from system_mcp.android.base import require_enabled
-from system_mcp.core.result import MCPResult
-from system_mcp.core.audit import log_action
 from system_mcp.android.notification import get_active_notifications
-import urllib.parse
+from system_mcp.core.audit import log_action
+from system_mcp.core.result import MCPResult
 
 "\nsystem_mcp.android.phone\nPhone calling and call history management via ADB.\n"
 
@@ -45,7 +45,7 @@ def get_call_history(limit: int = 50) -> MCPResult:
             if not line.strip() or "No result found" in line:
                 continue
             parts = line.split(", ")
-            entry: Dict[str, Any] = {}
+            entry: dict[str, Any] = {}
             for part in parts:
                 if "=" in part:
                     k, v = part.split("=", 1)

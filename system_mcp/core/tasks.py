@@ -1,9 +1,10 @@
 import json
-import time
 import os
+import time
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
+
 
 @dataclass
 class TaskState:
@@ -18,20 +19,20 @@ class TaskState:
 class TaskStep:
     description: str
     state: str = TaskState.PENDING
-    action: Optional[str] = None
-    args: Optional[Dict[str, Any]] = None
+    action: str | None = None
+    args: dict[str, Any] | None = None
     verification_passed: bool = False
     retries: int = 0
-    error: Optional[str] = None
+    error: str | None = None
     
 @dataclass
 class Task:
     id: str
     instruction: str
-    steps: List[TaskStep] = field(default_factory=list)
+    steps: list[TaskStep] = field(default_factory=list)
     state: str = TaskState.PENDING
     created_at: float = field(default_factory=time.time)
-    completed_at: Optional[float] = None
+    completed_at: float | None = None
 
     def get_log_path(self) -> Path:
         p = Path(os.path.expanduser(f"~/.system-mcp/tasks/{self.id}.json"))

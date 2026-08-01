@@ -1,6 +1,5 @@
-import pytest
-import os
-from system_mcp.core.config import SystemMCPConfig, get_config, configure
+from system_mcp.core.config import SystemMCPConfig, configure, get_config
+
 
 def test_default_config():
     # Fresh config instance

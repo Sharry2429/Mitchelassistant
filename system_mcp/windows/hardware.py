@@ -1,37 +1,39 @@
-from system_mcp.core.errors import SystemMCPError
-from system_mcp.windows.config import get_config
-from system_mcp.windows.types import AudioDevice
-from system_mcp.windows.types import DisplayInfo
-from system_mcp.windows.types import (
-    NetworkAdapter,
-    NetworkInfo,
-    PingResult,
-    DnsResult,
-    PortInfo,
-)
 import ctypes
 import json
 import logging
 import os
-import psutil
 import socket
 import subprocess
 import tempfile
 import urllib.request
 
+import psutil
+
+from system_mcp.core.errors import SystemMCPError
+from system_mcp.windows.config import get_config
+from system_mcp.windows.types import (
+    AudioDevice,
+    DisplayInfo,
+    DnsResult,
+    NetworkAdapter,
+    NetworkInfo,
+    PingResult,
+    PortInfo,
+)
+
 # --- audio.py ---
 
 __all__ = [
-    "get_volume",
-    "set_volume",
-    "mute",
-    "unmute",
-    "toggle_mute",
-    "is_muted",
-    "volume_up",
-    "volume_down",
     "get_audio_devices",
+    "get_volume",
+    "is_muted",
+    "mute",
     "set_default_device",
+    "set_volume",
+    "toggle_mute",
+    "unmute",
+    "volume_down",
+    "volume_up",
 ]
 
 VK_VOLUME_MUTE = 0xAD
@@ -204,13 +206,13 @@ def set_default_device(name: str) -> bool:
 
 
 __all__ = [
-    "get_displays",
-    "get_primary_display",
+    "get_brightness",
     "get_display_resolution",
+    "get_displays",
     "get_dpi_scale",
+    "get_primary_display",
     "get_screen_size",
     "set_brightness",
-    "get_brightness",
 ]
 
 
@@ -295,21 +297,21 @@ def get_brightness() -> int:
 # --- network.py ---
 
 __all__ = [
-    "get_network_adapters",
-    "get_network_info",
-    "get_ip_addresses",
-    "get_public_ip",
-    "get_wifi_networks",
+    "add_firewall_rule",
     "connect_wifi",
     "disconnect_wifi",
-    "ping",
-    "traceroute",
-    "get_open_ports",
     "dns_lookup",
-    "get_firewall_status",
-    "add_firewall_rule",
-    "remove_firewall_rule",
     "flush_dns",
+    "get_firewall_status",
+    "get_ip_addresses",
+    "get_network_adapters",
+    "get_network_info",
+    "get_open_ports",
+    "get_public_ip",
+    "get_wifi_networks",
+    "ping",
+    "remove_firewall_rule",
+    "traceroute",
 ]
 
 

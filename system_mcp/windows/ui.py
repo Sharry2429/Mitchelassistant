@@ -1,5 +1,14 @@
+import ctypes
+import time
 from ctypes import wintypes
+
+import psutil
+import win32clipboard
+import win32con
+import win32gui
+import win32process
 from fuzzywuzzy import process
+
 from system_mcp.windows.core.powershell import execute
 from system_mcp.windows.core.screenshot import (
     capture_screen,
@@ -7,36 +16,28 @@ from system_mcp.windows.core.screenshot import (
     save_screenshot,
 )
 from system_mcp.windows.types import (
-    DesktopState,
-    Window,
-    WindowStatus,
-    UIElement,
     BoundingBox,
+    DesktopState,
     DisplayInfo,
     ScreenshotResult,
+    UIElement,
+    Window,
+    WindowStatus,
 )
-from typing import Optional, List, Tuple
-import ctypes
-import psutil
-import time
-import win32clipboard
-import win32con
-import win32gui
-import win32process
 
 # --- desktop.py ---
 
 
 __all__ = [
-    "snapshot",
-    "screenshot",
-    "get_windows",
+    "find_element",
     "get_active_window",
     "get_cursor_position",
     "get_displays",
     "get_ui_elements",
-    "find_element",
     "get_window_by_title",
+    "get_windows",
+    "screenshot",
+    "snapshot",
 ]
 
 user32 = ctypes.windll.user32
@@ -64,7 +65,7 @@ def snapshot(use_vision: bool = False, use_annotation: bool = True) -> DesktopSt
 
 
 def screenshot(
-    region: Optional[Tuple[int, int, int, int]] = None, save_path: Optional[str] = None
+    region: tuple[int, int, int, int] | None = None, save_path: str | None = None
 ) -> ScreenshotResult:
     img = capture_screen(region)
     data = image_to_bytes(img)
@@ -88,7 +89,7 @@ def _get_process_name(pid: int) -> str:
         return "Unknown"
 
 
-def _create_window_obj(hwnd: int) -> Optional[Window]:
+def _create_window_obj(hwnd: int) -> Window | None:
     if not win32gui.IsWindowVisible(hwnd):
         return None
 
@@ -119,8 +120,8 @@ def _create_window_obj(hwnd: int) -> Optional[Window]:
     )
 
 
-def get_windows() -> List[Window]:
-    windows: List[Window] = []
+def get_windows() -> list[Window]:
+    windows: list[Window] = []
 
     def enum_windows_proc(hwnd, lParam):
         win = _create_window_obj(hwnd)
@@ -136,7 +137,7 @@ def get_windows() -> List[Window]:
     return windows
 
 
-def get_active_window() -> Optional[Window]:
+def get_active_window() -> Window | None:
     try:
         hwnd = win32gui.GetForegroundWindow()
         if hwnd:
@@ -146,7 +147,7 @@ def get_active_window() -> Optional[Window]:
     return None
 
 
-def get_cursor_position() -> Tuple[int, int]:
+def get_cursor_position() -> tuple[int, int]:
     class POINT(ctypes.Structure):
         _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
@@ -155,8 +156,8 @@ def get_cursor_position() -> Tuple[int, int]:
     return (pt.x, pt.y)
 
 
-def get_displays() -> List[DisplayInfo]:
-    displays: List[DisplayInfo] = []
+def get_displays() -> list[DisplayInfo]:
+    displays: list[DisplayInfo] = []
 
     class RECT(ctypes.Structure):
         _fields_ = [
@@ -213,8 +214,8 @@ def get_displays() -> List[DisplayInfo]:
     return displays
 
 
-def get_ui_elements(window_handle: Optional[int] = None) -> List[UIElement]:
-    elements: List[UIElement] = []
+def get_ui_elements(window_handle: int | None = None) -> list[UIElement]:
+    elements: list[UIElement] = []
 
     def enum_child_proc(hwnd, lParam):
         if not win32gui.IsWindowVisible(hwnd):
@@ -257,7 +258,7 @@ def get_ui_elements(window_handle: Optional[int] = None) -> List[UIElement]:
     return elements
 
 
-def find_element(text: str = "", control_type: str = "") -> Optional[UIElement]:
+def find_element(text: str = "", control_type: str = "") -> UIElement | None:
     elements = get_ui_elements()
 
     for el in elements:
@@ -276,15 +277,13 @@ def find_element(text: str = "", control_type: str = "") -> Optional[UIElement]:
         if text and control_type:
             if match_text and match_ctype:
                 return el
-        elif text and match_text:
-            return el
-        elif control_type and match_ctype:
+        elif text and match_text or control_type and match_ctype:
             return el
 
     return None
 
 
-def get_window_by_title(title: str, fuzzy: bool = True) -> Optional[Window]:
+def get_window_by_title(title: str, fuzzy: bool = True) -> Window | None:
     windows = get_windows()
     if not windows:
         return None
@@ -315,17 +314,17 @@ def get_window_by_title(title: str, fuzzy: bool = True) -> Optional[Window]:
 __all__ = [
     "click",
     "double_click",
-    "right_click",
-    "middle_click",
-    "move_mouse",
     "drag",
-    "scroll",
     "get_mouse_position",
-    "type_text",
-    "press_key",
     "hotkey",
     "key_down",
     "key_up",
+    "middle_click",
+    "move_mouse",
+    "press_key",
+    "right_click",
+    "scroll",
+    "type_text",
     "wait",
     "wait_for",
 ]
@@ -584,7 +583,7 @@ def wait(seconds: float) -> None:
 
 def wait_for(
     condition: str,
-    text: Optional[str] = None,
+    text: str | None = None,
     timeout: float = 10.0,
     poll_interval: float = 0.5,
 ) -> bool:
@@ -628,12 +627,12 @@ Clipboard operations using ctypes/win32clipboard.
 
 
 __all__ = [
-    "get_clipboard",
-    "set_clipboard",
-    "get_clipboard_image",
-    "set_clipboard_image",
     "clear_clipboard",
+    "get_clipboard",
     "get_clipboard_formats",
+    "get_clipboard_image",
+    "set_clipboard",
+    "set_clipboard_image",
 ]
 
 
@@ -659,7 +658,7 @@ def set_clipboard(text: str) -> None:
         win32clipboard.CloseClipboard()
 
 
-def get_clipboard_image() -> Optional[bytes]:
+def get_clipboard_image() -> bytes | None:
     """Get image from clipboard as PNG bytes."""
     # Note: Returning raw CF_DIB bytes. Converting raw DIB to PNG without Pillow is non-trivial.
     win32clipboard.OpenClipboard()
@@ -699,7 +698,7 @@ def clear_clipboard() -> None:
         win32clipboard.CloseClipboard()
 
 
-def get_clipboard_formats() -> List[str]:
+def get_clipboard_formats() -> list[str]:
     """List available clipboard formats."""
     formats = []
     win32clipboard.OpenClipboard()
@@ -719,11 +718,11 @@ Windows toast notifications.
 """
 
 
-__all__ = ["send_notification", "send_alert"]
+__all__ = ["send_alert", "send_notification"]
 
 
 def send_notification(
-    title: str, body: str, icon_path: Optional[str] = None, duration: str = "short"
+    title: str, body: str, icon_path: str | None = None, duration: str = "short"
 ) -> bool:
     """Send a Windows toast notification."""
     duration_ms = 3000 if duration == "short" else 10000

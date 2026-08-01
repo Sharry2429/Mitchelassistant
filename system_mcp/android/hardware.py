@@ -1,14 +1,13 @@
-from system_mcp.core.errors import SystemMCPError
-from system_mcp.core.errors import PermissionDenied
-from system_mcp.core.errors import DeviceOffline
-from system_mcp.core.audit import log_action
-from system_mcp.android import adb
-from system_mcp.core.result import MCPResult
-import subprocess
-import logging
-from typing import Optional
 import io
+import logging
+import subprocess
+
 from PIL import Image
+
+from system_mcp.android import adb
+from system_mcp.core.audit import log_action
+from system_mcp.core.errors import DeviceOffline, PermissionDenied, SystemMCPError
+from system_mcp.core.result import MCPResult
 
 "\nAndroid audio management via ADB.\n"
 
@@ -120,7 +119,7 @@ def get_ssid() -> MCPResult:
 logger = logging.getLogger(__name__)
 
 
-def toggle_wireless_debugging(enable: bool, device_serial: Optional[str] = None):
+def toggle_wireless_debugging(enable: bool, device_serial: str | None = None):
     """Toggle wireless debugging on or off."""
     value = "1" if enable else "0"
     cmd = ["adb"]

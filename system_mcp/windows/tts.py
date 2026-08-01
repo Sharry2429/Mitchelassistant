@@ -5,6 +5,7 @@ Local ONNX-based Text-to-Speech using Kokoro.
 
 import os
 import urllib.request
+
 from system_mcp.core.result import MCPResult
 
 # Lazy-loaded globals
@@ -69,7 +70,7 @@ def speak(text: str, voice: str = "af_bella", speed: float = 1.0) -> MCPResult:
         
         return MCPResult.success(f"Spoke: '{text}' using voice '{voice}'")
     except Exception as e:
-        return MCPResult.fail(f"TTS failed: {str(e)}")
+        return MCPResult.fail(f"TTS failed: {e!s}")
 
 
 def get_voices() -> MCPResult:

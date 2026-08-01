@@ -4,7 +4,7 @@ Unified result envelope for all System-MCP operations.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -19,7 +19,7 @@ class MCPResult:
 
     ok: bool = True
     data: Any = None
-    error: Optional[str] = None
+    error: str | None = None
 
     # ---- convenience constructors ----
 

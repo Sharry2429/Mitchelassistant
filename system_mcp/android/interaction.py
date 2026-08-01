@@ -1,13 +1,15 @@
-from system_mcp.core.errors import SystemMCPError
-from system_mcp.core.audit import log_action
-from system_mcp.android import adb
-from system_mcp.core.result import MCPResult
-from system_mcp.android.hardware import grab_frame
 import base64
-import os
-import requests
 import io
+import os
+
+import requests
 from PIL import Image
+
+from system_mcp.android import adb
+from system_mcp.android.hardware import grab_frame
+from system_mcp.core.audit import log_action
+from system_mcp.core.errors import SystemMCPError
+from system_mcp.core.result import MCPResult
 
 
 def tap(x: int, y: int) -> MCPResult:

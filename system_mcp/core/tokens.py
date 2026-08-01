@@ -1,8 +1,8 @@
 import json
-import time
 import os
+import time
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+
 
 def estimate_tokens(text: str) -> int:
     """Lightweight heuristic to estimate tokens (approx 1.3 tokens per word)."""
@@ -36,7 +36,7 @@ def analyze_prompt(user_input: str) -> bool:
         
     return True
 
-def compress_history(history: List[Dict[str, str]], threshold: int = 10) -> List[Dict[str, str]]:
+def compress_history(history: list[dict[str, str]], threshold: int = 10) -> list[dict[str, str]]:
     """
     Compress older messages into a summary if history exceeds the threshold.
     Returns a new history list.

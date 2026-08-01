@@ -1,15 +1,14 @@
-import os
-import subprocess
-import ctypes
-import winreg
 import base64
+import ctypes
 import locale
 import logging
-from typing import Optional, Dict, List
+import os
+import subprocess
+import winreg
 
-from system_mcp.windows.types import CommandResult
-from system_mcp.windows.config import get_config
 from system_mcp.core.audit import check_destructive, log_action
+from system_mcp.windows.config import get_config
+from system_mcp.windows.types import CommandResult
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +37,7 @@ def get_powershell_path() -> str:
     return "powershell.exe"
 
 
-def _get_registry_env(key, subkey: str) -> Dict[str, str]:
+def _get_registry_env(key, subkey: str) -> dict[str, str]:
     env = {}
     try:
         with winreg.OpenKey(key, subkey) as reg_key:
@@ -73,7 +72,7 @@ def _get_user_name() -> str:
     return os.environ.get("USERNAME", "UNKNOWN")
 
 
-def _prepare_env() -> Dict[str, str]:
+def _prepare_env() -> dict[str, str]:
     """Reconstruct full environment."""
     # Start with a clean copy of the current environment to get things like SystemRoot
     env = os.environ.copy()
@@ -108,10 +107,10 @@ def _prepare_env() -> Dict[str, str]:
 
 
 def _run_with_timeout(
-    args: List[str],
-    timeout: Optional[int],
-    env: Dict[str, str],
-    requested_encoding: Optional[str] = None,
+    args: list[str],
+    timeout: int | None,
+    env: dict[str, str],
+    requested_encoding: str | None = None,
 ) -> CommandResult:
     try:
         process = subprocess.Popen(
@@ -150,9 +149,9 @@ def _run_with_timeout(
 
 def execute(
     command: str,
-    timeout: Optional[int] = None,
+    timeout: int | None = None,
     as_admin: bool = False,
-    encoding: Optional[str] = None,
+    encoding: str | None = None,
     confirm: bool = False,
 ) -> CommandResult:
     check_destructive("shell.execute", confirm)
@@ -190,7 +189,7 @@ def execute(
 
 
 def execute_script(
-    script_path: str, args: Optional[List[str]] = None, timeout: Optional[int] = None, confirm: bool = False
+    script_path: str, args: list[str] | None = None, timeout: int | None = None, confirm: bool = False
 ) -> CommandResult:
     check_destructive("shell.execute", confirm)
     log_action("windows.powershell", "execute_script", {"script_path": script_path, "args": args}, {})

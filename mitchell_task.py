@@ -3,14 +3,15 @@ import asyncio
 import os
 import sys
 import uuid
+
 from dotenv import load_dotenv
+from google.antigravity import Agent, CapabilitiesConfig, LocalAgentConfig
+from google.antigravity.types import CustomSystemInstructions, McpStdioServer
 
-from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
-from google.antigravity.types import McpStdioServer, CustomSystemInstructions
-
+from system_mcp.core.audit import TaskScope, set_task_scope
 from system_mcp.core.config import configure
 from system_mcp.core.tasks import Task, TaskState
-from system_mcp.core.audit import TaskScope, set_task_scope
+
 
 async def run_task(instruction: str, scope: TaskScope):
     load_dotenv()

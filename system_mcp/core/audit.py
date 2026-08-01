@@ -3,23 +3,23 @@ system_mcp.core.audit
 Action logging and destructive action safety gates.
 """
 
-from typing import Any, Dict
-import time
+import fnmatch
 import json
 import os
-from pathlib import Path
-
-from system_mcp.core.errors import RequiresConfirmation
-from system_mcp.core.config import get_config
+import time
 from dataclasses import dataclass, field
-from typing import List
-import fnmatch
+from pathlib import Path
+from typing import Any
+
+from system_mcp.core.config import get_config
+from system_mcp.core.errors import RequiresConfirmation
+
 
 @dataclass
 class TaskScope:
-    allowed_actions: List[str] = field(default_factory=list)
-    allowed_paths: List[str] = field(default_factory=list)
-    protected_paths: List[str] = field(default_factory=lambda: [
+    allowed_actions: list[str] = field(default_factory=list)
+    allowed_paths: list[str] = field(default_factory=list)
+    protected_paths: list[str] = field(default_factory=lambda: [
         "system_mcp/core/audit.py",
         "system_mcp/core/config.py",
         "tests/*"
@@ -82,8 +82,8 @@ def _get_log_path() -> Path:
 def log_action(
     module: str,
     action: str,
-    args: Dict[str, Any],
-    kwargs: Dict[str, Any],
+    args: dict[str, Any],
+    kwargs: dict[str, Any],
     caller: str = "system",
 ):
     """Log an action to the audit file."""
@@ -146,7 +146,7 @@ def check_sensitive(module: str, action: str, confirm: bool = False):
     log_action(module, action, {}, {}, "sensitive_check")
 
 
-def get_log(since: float = 0, limit: int = 100) -> list[Dict[str, Any]]:
+def get_log(since: float = 0, limit: int = 100) -> list[dict[str, Any]]:
     """Retrieve audit logs."""
     logs = []
     p = _get_log_path()

@@ -4,6 +4,7 @@ Self-evolving memory tools for Mitchell to update its character and user context
 """
 
 import os
+
 from system_mcp.core.result import MCPResult
 
 MITCHELL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".mitchell"))
@@ -47,4 +48,4 @@ def update_mitchell_memory(topic: str, insights: str) -> MCPResult:
             
         return MCPResult.success(f"Successfully updated memory topic '{topic}' in {os.path.basename(target_file)}")
     except Exception as e:
-        return MCPResult.fail(f"Failed to update memory: {str(e)}")
+        return MCPResult.fail(f"Failed to update memory: {e!s}")

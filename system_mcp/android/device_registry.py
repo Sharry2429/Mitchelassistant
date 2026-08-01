@@ -1,7 +1,7 @@
-import subprocess
 import logging
+import subprocess
 import time
-from typing import Dict
+
 from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
 
 logger = logging.getLogger(__name__)
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class AdbServiceListener(ServiceListener):
     def __init__(self):
-        self.devices: Dict[str, str] = {}  # mapping of service name to address
+        self.devices: dict[str, str] = {}  # mapping of service name to address
 
     def update_service(self, zc: Zeroconf, type_: str, name: str) -> None:
         pass

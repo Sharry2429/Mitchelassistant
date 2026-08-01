@@ -3,9 +3,10 @@ system_mcp.mcp_server
 Unified MCP Server exposing both Windows and Android modules under a single namespace.
 """
 
-from fastmcp import FastMCP
 import importlib
 import inspect
+
+from fastmcp import FastMCP
 
 # Initialize MCP Server
 mcp = FastMCP("System-MCP")

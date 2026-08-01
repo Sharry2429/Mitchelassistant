@@ -1,37 +1,37 @@
-from datetime import datetime
-from fuzzywuzzy import process, fuzz
-from pathlib import Path
-from system_mcp.windows.config import get_config
-from system_mcp.windows.types import CommandResult
-from system_mcp.windows.types import FileInfo, DirectoryListing
-from typing import Optional, List, Dict
-from urllib.parse import urlparse
-import markdownify
 import os
-import psutil
 import re
-import requests
 import shutil
 import subprocess
+from datetime import datetime
+from pathlib import Path
+from urllib.parse import urlparse
+
+import markdownify
+import psutil
+import requests
 import win32con
 import win32gui
 import win32process
+from fuzzywuzzy import fuzz, process
+
+from system_mcp.windows.config import get_config
+from system_mcp.windows.types import CommandResult, DirectoryListing, FileInfo
 
 # --- app.py ---
 
 
 __all__ = [
-    "open_app",
-    "launch_executable",
-    "focus_window",
     "close_window",
-    "minimize_window",
-    "maximize_window",
-    "restore_window",
-    "resize_window",
-    "move_window",
-    "list_installed_apps",
+    "focus_window",
     "is_app_running",
+    "launch_executable",
+    "list_installed_apps",
+    "maximize_window",
+    "minimize_window",
+    "move_window",
+    "open_app",
+    "resize_window",
+    "restore_window",
 ]
 
 
@@ -87,7 +87,7 @@ def open_app(name: str) -> CommandResult:
 
 
 def launch_executable(
-    path: str, args: Optional[List[str]] = None, cwd: Optional[str] = None
+    path: str, args: list[str] | None = None, cwd: str | None = None
 ) -> CommandResult:
     """Launch by path using subprocess.Popen."""
     cmd = [path]
@@ -209,7 +209,7 @@ def move_window(title: str, x: int, y: int) -> bool:
         return False
 
 
-def list_installed_apps() -> List[Dict[str, str]]:
+def list_installed_apps() -> list[dict[str, str]]:
     """Get from Start Menu + registry."""
     from system_mcp.windows.system import get_installed_programs
 
@@ -235,20 +235,20 @@ File operations module.
 
 
 __all__ = [
-    "list_dir",
-    "read_file",
-    "write_file",
     "copy",
-    "move",
     "delete",
     "exists",
     "file_info",
-    "search_files",
-    "make_dir",
     "get_size",
+    "list_dir",
+    "make_dir",
+    "move",
+    "read_file",
+    "search_files",
+    "write_file",
 ]
 
-from system_mcp.core.audit import check_path
+from system_mcp.core.audit import check_path, check_destructive
 
 
 def file_info(path: str) -> FileInfo:
@@ -362,8 +362,9 @@ def move(src: str, dst: str, overwrite: bool = False) -> FileInfo:
     return file_info(dst)
 
 
-def delete(path: str, recursive: bool = False) -> bool:
+def delete(path: str, recursive: bool = False, confirm: bool = False) -> bool:
     """Delete a file or directory."""
+    check_destructive("apps.delete", confirm)
     check_path(path)
     safeguards = get_config().get("safeguards", True)
 
@@ -444,11 +445,11 @@ def get_size(path: str) -> int:
 
 
 __all__ = [
-    "scrape_url",
-    "scrape_text",
-    "get_page_title",
-    "get_page_links",
     "download_file",
+    "get_page_links",
+    "get_page_title",
+    "scrape_text",
+    "scrape_url",
 ]
 
 
@@ -510,8 +511,7 @@ def download_file(url: str, save_path: str, timeout: int = 30) -> FileInfo:
     resp.raise_for_status()
 
     with open(save_path, "wb") as f:
-        for chunk in resp.iter_content(chunk_size=8192):
-            f.write(chunk)
+        f.writelines(resp.iter_content(chunk_size=8192))
 
     size = os.path.getsize(save_path)
     return FileInfo(path=save_path, size=size)

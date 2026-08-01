@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 
 __all__ = [
-    "get_current_desktop",
     "get_all_desktops",
+    "get_current_desktop",
     "get_desktop_count",
-    "switch_desktop",
     "is_window_on_current_desktop",
     "move_window_to_desktop",
+    "switch_desktop",
 ]
 
 logger = logging.getLogger("wincontrol.core.vdm")

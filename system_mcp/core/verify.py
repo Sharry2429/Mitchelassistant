@@ -1,5 +1,7 @@
 import os
+
 from system_mcp.core.result import CommandResult
+
 
 def verify_file_exists(path: str) -> CommandResult:
     if os.path.exists(path):

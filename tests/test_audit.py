@@ -1,16 +1,16 @@
-import pytest
-import os
 import json
-from pathlib import Path
+
+import pytest
+
 from system_mcp.core.audit import (
-    log_action,
+    DESTRUCTIVE,
     check_destructive,
     check_sensitive,
     get_log,
-    DESTRUCTIVE,
-    SENSITIVE_READ
+    log_action,
 )
 from system_mcp.core.errors import RequiresConfirmation
+
 
 # Mock config for testing
 class MockConfig:

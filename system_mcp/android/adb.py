@@ -5,13 +5,14 @@ calling subprocess directly.
 """
 
 import subprocess
-from typing import List
 
 from system_mcp.android.connection import get_adb_prefix
 from system_mcp.core.errors import (
     DeviceOffline,
-    TimeoutError as MCPTimeout,
     SystemMCPError,
+)
+from system_mcp.core.errors import (
+    TimeoutError as MCPTimeout,
 )
 
 # Default timeout for ADB commands (seconds)
@@ -56,7 +57,7 @@ def shell(command, *, timeout: int = _DEFAULT_TIMEOUT) -> str:
     return result.stdout.strip()
 
 
-def run(args: List[str], *, timeout: int = _DEFAULT_TIMEOUT) -> str:
+def run(args: list[str], *, timeout: int = _DEFAULT_TIMEOUT) -> str:
     """Run an arbitrary ADB sub-command (e.g. ``["push", src, dst]``).
 
     Raises:

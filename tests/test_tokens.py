@@ -1,9 +1,5 @@
-import pytest
-from system_mcp.core.tokens import (
-    estimate_tokens,
-    analyze_prompt,
-    compress_history
-)
+from system_mcp.core.tokens import analyze_prompt, compress_history, estimate_tokens
+
 
 def test_estimate_tokens():
     text = "This is a simple sentence."

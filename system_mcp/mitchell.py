@@ -1,19 +1,21 @@
+import asyncio
 import os
 import sys
-import asyncio
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
+from google.antigravity import Agent, CapabilitiesConfig, LocalAgentConfig
+from google.antigravity.types import CustomSystemInstructions, McpStdioServer
+from openai import AsyncOpenAI
 from prompt_toolkit import PromptSession
 from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.markdown import Markdown
-from openai import AsyncOpenAI
-
-from google.antigravity import Agent, LocalAgentConfig, CapabilitiesConfig
-from google.antigravity.types import McpStdioServer, CustomSystemInstructions
 
 from system_mcp.core.tokens import (
-    estimate_tokens, log_token_usage, analyze_prompt, compress_history
+    analyze_prompt,
+    compress_history,
+    estimate_tokens,
+    log_token_usage,
 )
 
 console = Console()

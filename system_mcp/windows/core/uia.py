@@ -8,21 +8,21 @@ import logging
 from typing import Any
 
 __all__ = [
-    "get_focused_element",
-    "get_element_name",
-    "get_element_control_type",
+    "find_element_by_automation_id",
+    "find_element_by_name",
+    "get_cursor_pos",
+    "get_desktop_element",
     "get_element_bounding_rect",
     "get_element_children",
-    "get_desktop_element",
-    "find_element_by_name",
-    "find_element_by_automation_id",
-    "send_keys",
-    "is_iconic",
-    "is_zoomed",
-    "is_window_visible",
-    "get_cursor_pos",
-    "set_cursor_pos",
+    "get_element_control_type",
+    "get_element_name",
+    "get_focused_element",
     "get_foreground_window",
+    "is_iconic",
+    "is_window_visible",
+    "is_zoomed",
+    "send_keys",
+    "set_cursor_pos",
     "set_foreground_window",
 ]
 

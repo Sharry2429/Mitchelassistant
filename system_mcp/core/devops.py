@@ -1,8 +1,8 @@
+import json
 import os
 import subprocess
 import urllib.request
-import json
-from typing import Optional
+
 
 def run_git(args: list[str]) -> str:
     result = subprocess.run(["git"] + args, capture_output=True, text=True)
@@ -36,7 +36,7 @@ def commit_changes(message: str, files: list[str]):
 def push_branch(branch_name: str):
     run_git(["push", "-u", "origin", branch_name])
 
-def open_pr(title: str, body: str, head_branch: str, base_branch: str = "main") -> Optional[str]:
+def open_pr(title: str, body: str, head_branch: str, base_branch: str = "main") -> str | None:
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
         print("Warning: GITHUB_TOKEN not set. Cannot open PR.")

@@ -1,42 +1,49 @@
-from system_mcp.windows.config import get_config
-from system_mcp.windows.core.powershell import execute as _ps_execute, is_elevated
-from system_mcp.windows.types import CommandResult, PowerPlan, ProcessInfo, RegistryValue, ServiceInfo
-from system_mcp.windows.types import (
-    SystemInfo,
-    CpuInfo,
-    MemoryInfo,
-    DiskInfo,
-    BatteryInfo,
-)
-from typing import Any, Optional, List, Union
-from system_mcp.core.audit import check_destructive, log_action
 import ctypes
 import json
 import logging
 import os
 import platform
-import psutil
 import re
 import shutil
 import subprocess
 import time
 import winreg
+from typing import Any
+
+import psutil
+
+from system_mcp.core.audit import check_destructive, log_action
+from system_mcp.windows.config import get_config
+from system_mcp.windows.core.powershell import execute as _ps_execute
+from system_mcp.windows.core.powershell import is_elevated
+from system_mcp.windows.types import (
+    BatteryInfo,
+    CommandResult,
+    CpuInfo,
+    DiskInfo,
+    MemoryInfo,
+    PowerPlan,
+    ProcessInfo,
+    RegistryValue,
+    ServiceInfo,
+    SystemInfo,
+)
 
 # --- power.py ---
 
 __all__ = [
-    "shutdown",
-    "restart",
     "cancel_shutdown",
-    "sleep",
+    "get_active_power_plan",
+    "get_power_plans",
+    "get_sleep_timeout",
     "hibernate",
     "lock_screen",
     "log_off",
-    "get_power_plans",
-    "get_active_power_plan",
+    "restart",
     "set_power_plan",
-    "get_sleep_timeout",
     "set_sleep_timeout",
+    "shutdown",
+    "sleep",
 ]
 
 
@@ -53,7 +60,8 @@ def _run_bool(cmd: list[str]) -> bool:
     return subprocess.run(cmd, creationflags=creationflags).returncode == 0
 
 
-def shutdown(delay: int = 0, force: bool = False) -> bool:
+def shutdown(delay: int = 0, force: bool = False, confirm: bool = False) -> bool:
+    check_destructive("system.shutdown", confirm)
     config = get_config()
     if config.get("safeguards", True) and delay < 30:
         delay = 30
@@ -63,7 +71,8 @@ def shutdown(delay: int = 0, force: bool = False) -> bool:
     return _run_bool(cmd)
 
 
-def restart(delay: int = 0, force: bool = False) -> bool:
+def restart(delay: int = 0, force: bool = False, confirm: bool = False) -> bool:
+    check_destructive("system.restart", confirm)
     config = get_config()
     if config.get("safeguards", True) and delay < 30:
         delay = 30
@@ -87,7 +96,8 @@ def sleep() -> bool:
     return _run_bool(cmd)
 
 
-def hibernate() -> bool:
+def hibernate(confirm: bool = False) -> bool:
+    check_destructive("system.hibernate", confirm)
     return _run_bool(["shutdown", "/h"])
 
 
@@ -99,7 +109,8 @@ def lock_screen() -> bool:
         return False
 
 
-def log_off() -> bool:
+def log_off(confirm: bool = False) -> bool:
+    check_destructive("system.log_off", confirm)
     config = get_config()
     if config.get("safeguards", True):
         time.sleep(30)
@@ -195,14 +206,14 @@ def set_sleep_timeout(
 
 
 __all__ = [
-    "list_processes",
     "get_process",
-    "kill_process",
-    "start_process",
-    "process_tree",
-    "is_process_running",
     "get_process_cpu",
     "get_process_memory",
+    "is_process_running",
+    "kill_process",
+    "list_processes",
+    "process_tree",
+    "start_process",
 ]
 
 CRITICAL_PROCESSES = {
@@ -240,7 +251,7 @@ def _create_process_info(proc: psutil.Process) -> ProcessInfo:
         )
 
 
-def list_processes(sort_by: str = "cpu") -> List[ProcessInfo]:
+def list_processes(sort_by: str = "cpu") -> list[ProcessInfo]:
     """List all processes using psutil."""
     processes = []
     for proc in psutil.process_iter(
@@ -261,7 +272,7 @@ def list_processes(sort_by: str = "cpu") -> List[ProcessInfo]:
     return processes
 
 
-def get_process(pid_or_name: Union[int, str]) -> Optional[ProcessInfo]:
+def get_process(pid_or_name: int | str) -> ProcessInfo | None:
     """Get by PID or name."""
     if isinstance(pid_or_name, int) or (
         isinstance(pid_or_name, str) and pid_or_name.isdigit()
@@ -285,8 +296,9 @@ def get_process(pid_or_name: Union[int, str]) -> Optional[ProcessInfo]:
     return None
 
 
-def kill_process(pid_or_name: Union[int, str], force: bool = False) -> bool:
+def kill_process(pid_or_name: int | str, force: bool = False, confirm: bool = False) -> bool:
     """Terminate/kill. If force=False (safeguards=True), block killing critical system processes."""
+    check_destructive("process.kill", confirm)
     if isinstance(pid_or_name, int) or (
         isinstance(pid_or_name, str) and pid_or_name.isdigit()
     ):
@@ -323,7 +335,7 @@ def kill_process(pid_or_name: Union[int, str], force: bool = False) -> bool:
         return False
 
 
-def start_process(command: str, cwd: Optional[str] = None, confirm: bool = False) -> ProcessInfo:
+def start_process(command: str, cwd: str | None = None, confirm: bool = False) -> ProcessInfo:
     """Start new process."""
     check_destructive("shell.execute", confirm)
     log_action("windows.system", "start_process", {"command": command, "cwd": cwd}, {})
@@ -344,7 +356,7 @@ def start_process(command: str, cwd: Optional[str] = None, confirm: bool = False
         )
 
 
-def process_tree(pid: int) -> List[ProcessInfo]:
+def process_tree(pid: int) -> list[ProcessInfo]:
     """Get parent and children."""
     tree = []
     try:
@@ -402,12 +414,12 @@ def get_process_memory(pid: int) -> float:
 
 
 __all__ = [
+    "cmd",
+    "pipe",
     "powershell",
     "powershell_admin",
-    "cmd",
-    "run_script",
     "run_background",
-    "pipe",
+    "run_script",
     "which",
 ]
 
@@ -434,7 +446,7 @@ def _check_safeguards(command: str) -> None:
 
 
 def powershell(
-    command: str, timeout: Optional[int] = None, encoding: Optional[str] = None
+    command: str, timeout: int | None = None, encoding: str | None = None
 ) -> CommandResult:
     """Execute a PowerShell command."""
     kwargs = {}
@@ -445,7 +457,7 @@ def powershell(
     return _ps_execute(command, **kwargs)
 
 
-def powershell_admin(command: str, timeout: Optional[int] = None) -> CommandResult:
+def powershell_admin(command: str, timeout: int | None = None) -> CommandResult:
     """Execute PowerShell with admin elevation."""
     _check_safeguards(command)
 
@@ -456,7 +468,7 @@ def powershell_admin(command: str, timeout: Optional[int] = None) -> CommandResu
         return _ps_execute(admin_command, timeout=timeout)
 
 
-def cmd(command: str, timeout: Optional[int] = None) -> CommandResult:
+def cmd(command: str, timeout: int | None = None) -> CommandResult:
     """Execute a CMD command via subprocess."""
     try:
         process = subprocess.run(
@@ -480,7 +492,7 @@ def cmd(command: str, timeout: Optional[int] = None) -> CommandResult:
 
 
 def run_script(
-    path: str, args: Optional[List[str]] = None, timeout: Optional[int] = None
+    path: str, args: list[str] | None = None, timeout: int | None = None
 ) -> CommandResult:
     """Run a .ps1, .bat, .cmd, or .py script file."""
     if not os.path.exists(path):
@@ -525,7 +537,7 @@ def run_background(command: str, shell: str = "powershell") -> ProcessInfo:
     return ProcessInfo(pid=process.pid, name=shell)
 
 
-def pipe(commands: List[str], shell: str = "powershell") -> CommandResult:
+def pipe(commands: list[str], shell: str = "powershell") -> CommandResult:
     """Chain multiple commands with pipe operator."""
     chained = " | ".join(commands)
     if shell.lower() == "powershell":
@@ -534,7 +546,7 @@ def pipe(commands: List[str], shell: str = "powershell") -> CommandResult:
         return cmd(chained)
 
 
-def which(program: str) -> Optional[str]:
+def which(program: str) -> str | None:
     """Find the full path of an executable (like Unix 'which')."""
     return shutil.which(program)
 
@@ -542,20 +554,20 @@ def which(program: str) -> Optional[str]:
 # --- sysinfo.py ---
 
 __all__ = [
-    "get_system_info",
+    "get_battery_info",
     "get_cpu_info",
     "get_cpu_usage",
-    "get_memory_info",
     "get_disk_info",
-    "get_battery_info",
+    "get_environment_variables",
+    "get_event_log",
+    "get_installed_programs",
+    "get_memory_info",
+    "get_startup_programs",
+    "get_system_info",
     "get_uptime",
     "get_uptime_human",
-    "get_environment_variables",
-    "set_environment_variable",
-    "get_installed_programs",
     "get_windows_version",
-    "get_event_log",
-    "get_startup_programs",
+    "set_environment_variable",
 ]
 
 
@@ -787,14 +799,14 @@ def get_system_info() -> SystemInfo:
 
 
 __all__ = [
-    "reg_read",
-    "reg_write",
+    "reg_create_key",
     "reg_delete",
+    "reg_delete_key",
+    "reg_key_exists",
     "reg_list_keys",
     "reg_list_values",
-    "reg_key_exists",
-    "reg_create_key",
-    "reg_delete_key",
+    "reg_read",
+    "reg_write",
 ]
 
 HIVE_MAP = {
@@ -981,15 +993,15 @@ def reg_delete_key(key_path: str, recursive: bool = False, confirm: bool = False
 # --- services.py ---
 
 __all__ = [
-    "list_services",
     "get_service",
+    "get_service_config",
+    "get_service_status",
+    "is_service_running",
+    "list_services",
+    "restart_service",
+    "set_service_startup",
     "start_service",
     "stop_service",
-    "restart_service",
-    "get_service_status",
-    "set_service_startup",
-    "is_service_running",
-    "get_service_config",
 ]
 
 

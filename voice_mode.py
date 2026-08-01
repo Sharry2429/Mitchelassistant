@@ -1,12 +1,14 @@
 import os
 import sys
-import time
 import tempfile
 import threading
-import requests
+import time
+
 import numpy as np
+import requests
 import sounddevice as sd
 import soundfile as sf
+
 from system_mcp.windows.tts import speak
 
 # Configuration
@@ -62,7 +64,7 @@ class VoiceMode:
         try:
             with open(".mitchell/boot.md", "r", encoding="utf-8") as f:
                 sys_prompt = f.read()
-        except IOError:
+        except OSError:
             sys_prompt = "You are Mitchell, a dry, witty AI."
 
         messages = [

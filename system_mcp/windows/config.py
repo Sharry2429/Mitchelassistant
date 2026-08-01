@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass
 from typing import Literal
 
-__all__ = ["WinControlConfig", "get_config", "configure"]
+__all__ = ["WinControlConfig", "configure", "get_config"]
 
 logger = logging.getLogger("wincontrol")
 
