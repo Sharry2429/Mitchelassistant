@@ -38,16 +38,16 @@ all = ["fastmcp>=2.0", "tabulate"]
 dev = ["pytest>=7.0.0"]
 
 [project.scripts]
-system-mcp = "system_mcp.cli:main"
 system-mcp-server = "system_mcp.mcp_server:main"
 mitchell = "system_mcp.mitchell:cli"
+mitchell-task = "mitchell_task:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["mitchell", "voice_mode", "tts_loop", "test_mitchell"]
+py-modules = ["voice_mode", "tts_loop", "mitchell_task"]
 
 [tool.setuptools.packages.find]
 where = ["."]

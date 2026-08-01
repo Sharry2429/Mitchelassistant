@@ -36,7 +36,7 @@ windows_modules = ["system", "hardware", "ui", "apps", "tts", "stt"]
 android_modules = ["system", "hardware", "interaction", "apps", "communication"]
 
 # Core Modules
-core_modules = ["memory"]
+core_modules = ["memory", "verify", "tasks"]
 
 register_platform_tools("windows", windows_modules)
 register_platform_tools("android", android_modules)

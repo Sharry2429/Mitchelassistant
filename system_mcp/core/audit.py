@@ -105,12 +105,28 @@ def check_destructive(action: str, confirm: bool):
         if get_config().unattended_mode and _current_task_scope:
             if not _current_task_scope.can_execute_action(action):
                 raise RequiresConfirmation(f"Action '{action}' is outside allowed TaskScope.")
+            log_action("system", action, {}, {}, "destructive_check")
             return
 
         if action in DESTRUCTIVE and not confirm:
             raise RequiresConfirmation(
                 f"Action '{action}' is destructive. Pass confirm=True to execute."
             )
+        log_action("system", action, {}, {}, "destructive_check")
+
+def check_path(path: str):
+    """Gate for file/path modifications."""
+    if get_config().safeguards:
+        if get_config().unattended_mode and _current_task_scope:
+            if not _current_task_scope.can_modify_path(path):
+                raise RequiresConfirmation(f"Modifying path '{path}' is outside allowed TaskScope or is protected.")
+        else:
+            # Even in interactive mode, we should prevent modifying core safety files
+            # unless the user has explicitly disabled safeguards.
+            # We can use a default TaskScope just for path protection.
+            temp_scope = TaskScope(allowed_paths=["*"]) 
+            if not temp_scope.can_modify_path(path):
+                raise RequiresConfirmation(f"Path '{path}' is a protected system file and cannot be modified.")
 
 
 def check_sensitive(module: str, action: str, confirm: bool = False):

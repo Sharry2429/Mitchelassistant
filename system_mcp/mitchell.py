@@ -32,6 +32,8 @@ def load_memory() -> str:
         with open(boot_path, "r", encoding="utf-8") as f:
             prompt_parts.append("\n=== CORE IDENTITY (boot.md) ===\n" + f.read())
             
+    return "\n".join(prompt_parts)
+            
 def get_index_prompt() -> str:
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     index_path = os.path.join(root_dir, ".mitchell", "index.md")
@@ -134,7 +136,8 @@ async def main():
             # 3. Delegate to AGY (Gemini Pro) for execution
             console.print("\n[dim]🚀 Delegating to Antigravity Execution Core...[/dim]\n")
             
-            log_token_usage("agy_core", user_input, estimate_tokens(user_input))
+            total_agy_tokens = estimate_tokens(user_input) + estimate_tokens(memory_prompt)
+            log_token_usage("agy_core", user_input, total_agy_tokens)
             
             content_str = ""
             async with Agent(agy_config) as agy_agent:

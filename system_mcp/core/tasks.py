@@ -51,3 +51,14 @@ class Task:
             data = json.load(f)
             steps = [TaskStep(**s) for s in data.pop("steps", [])]
             return cls(**data, steps=steps)
+
+def log_task_step(task_id: str, description: str, state: str = TaskState.COMPLETED) -> str:
+    """Log a step for a given task ID."""
+    task = Task.load(task_id)
+    if not task:
+        return f"Task {task_id} not found."
+    
+    step = TaskStep(description=description, state=state)
+    task.steps.append(step)
+    task.save()
+    return f"Successfully logged step: {description} (State: {state})"

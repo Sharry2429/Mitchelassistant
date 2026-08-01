@@ -51,5 +51,5 @@ The architecture is designed to maximize capability while driving down API token
 2. **Run Dual-Engine Mitchell:**
    Use the Python orchestration script to run tasks using the Zero-Cost architecture:
    ```bash
-   python mitchell.py
+   python -m system_mcp.mitchell
    ```

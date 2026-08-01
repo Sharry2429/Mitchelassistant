@@ -248,6 +248,8 @@ __all__ = [
     "get_size",
 ]
 
+from system_mcp.core.audit import check_path
+
 
 def file_info(path: str) -> FileInfo:
     """Get information about a file or directory."""
@@ -308,6 +310,7 @@ def write_file(
     path: str, content: str, encoding: str = "utf-8", append: bool = False
 ) -> FileInfo:
     """Write or append to a file."""
+    check_path(path)
     mode = "a" if append else "w"
     with open(path, mode, encoding=encoding) as f:
         f.write(content)
@@ -316,6 +319,7 @@ def write_file(
 
 def copy(src: str, dst: str, overwrite: bool = False) -> FileInfo:
     """Copy file or directory."""
+    check_path(dst)
     safeguards = get_config().get("safeguards", True)
     if not overwrite and os.path.exists(dst):
         if safeguards:
@@ -339,6 +343,8 @@ def copy(src: str, dst: str, overwrite: bool = False) -> FileInfo:
 
 def move(src: str, dst: str, overwrite: bool = False) -> FileInfo:
     """Move file or directory."""
+    check_path(src)
+    check_path(dst)
     safeguards = get_config().get("safeguards", True)
     if not overwrite and os.path.exists(dst):
         if safeguards:
@@ -358,6 +364,7 @@ def move(src: str, dst: str, overwrite: bool = False) -> FileInfo:
 
 def delete(path: str, recursive: bool = False) -> bool:
     """Delete a file or directory."""
+    check_path(path)
     safeguards = get_config().get("safeguards", True)
 
     system_dirs = [

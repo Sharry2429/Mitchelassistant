@@ -80,20 +80,16 @@ You must follow this lifecycle:
 def main():
     parser = argparse.ArgumentParser(description="Mitchell Autonomous Task Runner")
     parser.add_argument("--task", type=str, required=True, help="Task instruction")
-    parser.add_argument("--allow-action", type=str, action="append", default=["*"], help="Allowed actions prefix (default: *)")
-    parser.add_argument("--allow-path", type=str, action="append", default=["*"], help="Allowed path globs (default: *)")
+    parser.add_argument("--allow-action", type=str, action="append", default=[], help="Allowed actions prefix (default: empty)")
+    parser.add_argument("--allow-path", type=str, action="append", default=[], help="Allowed path globs (default: empty)")
     args = parser.parse_args()
     
     # By default argparse append action doesn't override the default, it appends to it.
-    # We should clean up if user provides specific arguments.
-    allowed_actions = args.allow_action if args.allow_action != ["*"] else ["*"]
-    allowed_paths = args.allow_path if args.allow_path != ["*"] else ["*"]
+    # If the default is empty, args.allow_action is exactly what the user passed.
+    allowed_actions = args.allow_action
+    allowed_paths = args.allow_path
     
-    if len(args.allow_action) > 1 and args.allow_action[0] == "*":
-        allowed_actions = args.allow_action[1:]
-    if len(args.allow_path) > 1 and args.allow_path[0] == "*":
-        allowed_paths = args.allow_path[1:]
-    
+
     scope = TaskScope(
         allowed_actions=allowed_actions,
         allowed_paths=allowed_paths

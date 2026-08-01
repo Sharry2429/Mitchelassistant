@@ -16,8 +16,21 @@ def get_current_branch() -> str:
 def create_branch(branch_name: str):
     run_git(["checkout", "-b", branch_name])
 
-def commit_changes(message: str):
-    run_git(["add", "."])
+def commit_changes(message: str, files: list[str]):
+    if get_current_branch() == "main":
+        raise Exception("Cannot commit directly to main branch in autonomous mode. Create a branch first.")
+        
+    from system_mcp.core.self_audit import run_tests
+    test_errors = run_tests()
+    if test_errors:
+        raise Exception("Pre-commit checks failed! Fix these tests before committing:\n" + "\n".join(test_errors))
+        
+    if not files:
+        raise Exception("No files specified for commit.")
+        
+    for f in files:
+        run_git(["add", f])
+        
     run_git(["commit", "-m", message])
 
 def push_branch(branch_name: str):
