@@ -63,6 +63,19 @@ def _register_coding_tools():
 _register_coding_tools()
 
 
+# Tool Foundry — previously drafted & verified tools become callable MCP tools.
+def _register_foundry_tools():
+    try:
+        from mitchell.core.tool_registry import list_registered, load_foundry_function
+        for name in list_registered():
+            fn = load_foundry_function(name)
+            if fn is not None:
+                mcp.add_tool(fn)
+    except Exception:  # noqa: BLE001 - foundry may be empty/absent
+        pass
+_register_foundry_tools()
+
+
 def main():
     mcp.run(transport="stdio")
 
