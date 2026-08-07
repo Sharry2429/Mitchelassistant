@@ -56,6 +56,40 @@ class Task:
             steps = [TaskStep(**s) for s in data.pop("steps", [])]
             return cls(**data, steps=steps)
 
+def list_tasks(state: str | None = None) -> list["Task"]:
+    """Discover persisted tasks from the task queue directory.
+
+    Args:
+        state: if set, only return tasks whose `state` matches. Otherwise all.
+
+    Returns tasks ordered by creation time (oldest first).
+    """
+    tasks_dir = Path(os.path.expanduser("~/.system-mcp/tasks"))
+    if not tasks_dir.exists():
+        return []
+
+    result: list[Task] = []
+    for p in tasks_dir.glob("*.json"):
+        if p.name.endswith(".lock_dir"):
+            continue
+        t = Task.load(p.stem)
+        if t is None:
+            continue
+        if state is None or t.state == state:
+            result.append(t)
+
+    result.sort(key=lambda t: t.created_at)
+    return result
+
+
+def task_all_terminal(task: "Task") -> bool:
+    """True when every step is in a terminal state (nothing pending/running)."""
+    return bool(task.steps) and all(
+        s.state in (TaskState.COMPLETED, TaskState.FAILED, TaskState.SKIPPED)
+        for s in task.steps
+    )
+
+
 def log_task_step(task_id: str, description: str, state: str = TaskState.COMPLETED) -> str:
     """Log a step for a given task ID."""
     task = Task.load(task_id)

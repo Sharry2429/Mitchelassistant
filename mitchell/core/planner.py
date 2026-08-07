@@ -3,6 +3,17 @@ from mitchell.core.tasks import Task, TaskStep
 from mitchell.core.memory import find_cached_plan, get_user_profile, get_skills_log
 from mitchell.core.llm_client import call
 
+
+class PlanningError(Exception):
+    """Raised when a task cannot be decomposed into steps.
+
+    A planning failure must surface as a hard, observable error — NOT as a
+    synthetic ``action="fallback"`` step that no worker role can ever claim
+    (which silently deadlocks the queue). Callers mark the task FAILED and
+    stop; they do not park an unclaimable step.
+    """
+
+
 async def create_plan(task: Task) -> Task:
     # Check cache first
     cached_steps = find_cached_plan(task.instruction)
@@ -42,20 +53,20 @@ Each step should have 'description', 'action' (the tool namespace needed), and o
         if "```json" in content:
             content = content.split("```json")[1].split("```")[0]
         data = json.loads(content)
-        
+
         task.steps = []
-        for i, s_data in enumerate(data.get("steps", [])):
+        for s_data in data.get("steps", []):
             step = TaskStep(
                 description=s_data.get("description", ""),
                 action=s_data.get("action", None),
-                depends_on=s_data.get("depends_on", [])
+                depends_on=s_data.get("depends_on", []),
             )
             task.steps.append(step)
-            
+
         task.save()
-    except Exception as e:
-        # Fallback if planning fails
-        task.steps = [TaskStep(description=task.instruction, action="fallback")]
-        task.save()
-        
-    return task
+        return task
+    except Exception as e:  # noqa: BLE001 - any planning failure is a hard error
+        # Do NOT emit an unclaimable action="fallback" step. Surface it.
+        raise PlanningError(
+            f"Planning failed for task {task.id!r} (instruction: {task.instruction!r}): {e}"
+        ) from e

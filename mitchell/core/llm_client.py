@@ -1,7 +1,7 @@
 import os
 from openai import AsyncOpenAI
 from mitchell.core.models import AICREDITS_BASE_URL, MODEL_TIERS
-from mitchell.core.budget import check_budget_before_call, log_usage
+from mitchell.core.budget import check_budget_before_call, log_usage, estimate_cost
 from dataclasses import dataclass
 
 @dataclass
@@ -57,9 +57,9 @@ async def call(role: str, messages: list, tools: list | None = None,
     
     prompt_tokens = response.usage.prompt_tokens if response.usage else 0
     completion_tokens = response.usage.completion_tokens if response.usage else 0
-    # Placeholder cost estimation, this will be improved
-    cost_estimate = (prompt_tokens * 0.0001) + (completion_tokens * 0.0002) 
-    
+    # Real cost from the routing table's per-model pricing — not a flat placeholder.
+    cost_estimate = estimate_cost(model, prompt_tokens, completion_tokens)
+
     log_usage(task_id, role, model, prompt_tokens, completion_tokens, cost_estimate)
     
     return LLMResult(content=content, tool_calls=tool_calls)
