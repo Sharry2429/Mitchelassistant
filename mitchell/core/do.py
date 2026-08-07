@@ -76,6 +76,21 @@ async def _run_agent(task: str, idx: str) -> dict:
             "steps_ok": sum(1 for s in final.steps if s.state == TaskState.COMPLETED)}
 
 
+async def _run_fast(task: str, idx: str) -> dict:
+    """Lightning-fast path (1-2 LLM round trips) over safe real tools."""
+    from mitchell.core.fast import fast_do
+    provider = SafeProvider()
+    t0 = time.monotonic()
+    try:
+        res = await fast_do(task, provider)
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "answer": f"{type(e).__name__}: {e}",
+                "elapsed": round(time.monotonic() - t0, 2), "fast": True}
+    return {"ok": bool(res.get("answer") and res.get("answer").strip()),
+            "answer": res.get("answer"), "tool": res.get("tool"),
+            "elapsed": res.get("elapsed") or round(time.monotonic() - t0, 2), "fast": True}
+
+
 def main():
     if len(sys.argv) < 2:
         print("usage: mitchell-do \"<task>\"")
@@ -85,7 +100,6 @@ def main():
     t0 = time.monotonic()
 
     if _is_coding(task):
-        kind = "coding (Hermes-Agent worker)"
         res = _run_coding(task)
         print(f"\n[CODING] delegated to Hermes subprocess")
         print(f"  exit={res.get('exit_code')} duration={res['duration']}s workdir={res.get('workdir')}")
@@ -95,14 +109,19 @@ def main():
             print(f"  stderr tail: {(res.get('stderr_tail') or '')[-400:]}")
         sys.exit(0 if res.get('ok') else 3)
     else:
-        kind = "browser/Windows/Android (safe agent loop)"
-        res = asyncio.get_event_loop().run_until_complete(_run_agent(task, f"do-{uuid.uuid4().hex[:8]}"))
-        print(f"\n[{kind}]")
-        print(f"  state={res.get('state')} duration={res.get('duration')}s "
-              f"steps={res.get('steps')} (ok={res.get('steps_ok')})")
-        if res.get("error"):
-            print(f"  error: {res['error']}")
-        sys.exit(0 if res.get("ok") else 4)
+        print("\n[browser/Windows/Android — fast path]")
+        res = asyncio.get_event_loop().run_until_complete(_run_fast(task, "fast-"))
+        print(f"  fast: {res.get('fast')} tool={res.get('tool')} duration={res.get('elapsed')}s")
+        print(f"\n  ANSWER: {(res.get('answer') or '').strip()[:800]}")
+        # If the fast path couldn't produce an answer, fall back to the full loop.
+        if not res.get("ok"):
+            print("\n  fast path produced no answer -> running full verified loop...")
+            res = asyncio.get_event_loop().run_until_complete(_run_agent(task, f"do-{uuid.uuid4().hex[:8]}"))
+            print(f"  [full loop] state={res.get('state')} duration={res.get('duration')}s "
+                  f"steps={res.get('steps')} (ok={res.get('steps_ok')})")
+            sys.exit(0 if res.get("ok") else 4)
+        else:
+            sys.exit(0)
 
     print(f"\n  total wall-clock: {round(time.monotonic()-t0,2)}s")
 

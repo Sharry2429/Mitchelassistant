@@ -18,17 +18,29 @@ def main():
         default=None,
         help="Specific task id to run (omit to serve the task queue as a pool worker)",
     )
+    parser.add_argument(
+        "--safe",
+        action="store_true",
+        help="Use the SafeProvider (no destructive tools). Recommended for unattended runs",
+    )
     args = parser.parse_args()
 
     from mitchell.core.executor import worker_loop  # decoupled: no MCP server import
 
     config_module.configure(unattended_mode=True)
 
+    tools = None
+    if args.safe:
+        from mitchell.core.safe_provider import SafeProvider
+        tools = SafeProvider()
+
     worker_id = f"{args.role}-{uuid.uuid4().hex[:8]}"
     print(f"🚀 Starting {args.role} ({worker_id})" + (f" -> task {args.task}" if args.task else " (queue mode)"))
+    if args.safe:
+        print("🔒 safe tool policy active (no destructive tools)")
 
     try:
-        asyncio.run(worker_loop(worker_id, args.role, task_id=args.task))
+        asyncio.run(worker_loop(worker_id, args.role, task_id=args.task, tools=tools))
     except KeyboardInterrupt:
         print(f"\n🛑 {worker_id} shutting down cleanly.")
 
