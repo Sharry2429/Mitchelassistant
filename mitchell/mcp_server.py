@@ -43,6 +43,18 @@ register_platform_tools("windows", windows_modules)
 register_platform_tools("android", android_modules)
 register_platform_tools("core", core_modules)
 
+# Browser module — functions are already named browser_*, so register them
+# with their natural names (no platform/module re-prefix) and skip imports.
+def _register_browser_tools():
+    bm = importlib.import_module("mitchell.browser.browser")
+    for name, func in inspect.getmembers(bm, inspect.isfunction):
+        if name.startswith("browser_") and not name.startswith("_"):
+            try:
+                mcp.add_tool(func)
+            except Exception as e:  # noqa: BLE001
+                print(f"Skipping browser tool {name}: {e}")
+_register_browser_tools()
+
 
 def main():
     mcp.run(transport="stdio")
