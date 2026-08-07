@@ -45,7 +45,7 @@ def test_fast_do_chains_and_returns_clean_answer():
         {"kind": "tool", "tool": "t2", "args": {"x": 1}},
         {"kind": "final", "text": "The answer is 42."},
     ])
-    res = _run(fast_do("task", tools))
+    res = _run(fast_do("task", tools, llm_call=call))
     # It chained TWO tool calls with an injected fake LLM, then gave a clean answer.
     assert res["answer"] == "The answer is 42."
     assert "t1" in store["saw"] and "t2" in store["saw"]
@@ -57,7 +57,7 @@ def test_fast_do_sanitizes_raw_envelope_from_answer():
         {"kind": "tool", "tool": "t"},
         {"kind": "final", "text": "[TextContent(type='text', text='{raw}')] structure noise"},
     ])
-    res = _run(fast_do("task", tools))
+    res = _run(fast_do("task", tools, llm_call=call))
     # The envelope-leading answer is dropped so we don't present raw MCP text.
     assert not res["answer"].startswith("[TextContent(")
 

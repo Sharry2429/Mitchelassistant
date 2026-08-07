@@ -24,9 +24,10 @@ from mitchell.core.tool_provider import ToolProvider
 MAX_TURNS = 5
 
 
-async def fast_do(instruction: str, tools: ToolProvider, tier: str = "base") -> dict:
+async def fast_do(instruction: str, tools: ToolProvider, tier: str = "base", llm_call=None) -> dict:
     """Execute a task via a lean agent loop. Returns {answer, tool, turns, elapsed}."""
     t0 = time.monotonic()
+    inject = llm_call or call
     openai_tools = await tools.list_tools_openai()
 
     messages = [{"role": "user", "content": instruction}]
@@ -35,7 +36,7 @@ async def fast_do(instruction: str, tools: ToolProvider, tier: str = "base") -> 
     turns = 0
 
     for turns in range(1, MAX_TURNS + 1):
-        result = await call(tier, messages=messages, tools=openai_tools, task_id="fast")
+        result = await inject(tier, messages=messages, tools=openai_tools, task_id="fast")
 
         # Sanitize tool results so we never echo raw MCP envelopes into answers.
         content = (result.content or "").strip()
