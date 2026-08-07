@@ -29,3 +29,5 @@ Thumbs.db
 # Archives / backups (old junk from before)
 *.zip
 *.bak
+# dumps
+/dumps/
