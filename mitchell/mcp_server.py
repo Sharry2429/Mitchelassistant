@@ -56,6 +56,13 @@ def _register_browser_tools():
 _register_browser_tools()
 
 
+# Coding module — Hermes-Agent subprocess worker, registered with a clean name.
+def _register_coding_tools():
+    cm = importlib.import_module("mitchell.coding.mcp_tools")
+    mcp.add_tool(cm.coding_implement)
+_register_coding_tools()
+
+
 def main():
     mcp.run(transport="stdio")
 

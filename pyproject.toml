@@ -45,6 +45,7 @@ dev = ["pytest>=7.0.0"]
 system-mcp-server = "mitchell.mcp_server:main"
 mitchell = "mitchell.core.chat_interface:main"
 mitchell-task = "mitchell_task:main"
+mitchell-do = "mitchell.core.do:main"
 mitchell-dashboard = "mitchell.core.dashboard:main"
 
 [build-system]
