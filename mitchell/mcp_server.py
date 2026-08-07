@@ -76,6 +76,20 @@ def _register_foundry_tools():
 _register_foundry_tools()
 
 
+# Hermes tool gateway — expose "all the tools Hermes has" to Mitchell.
+def _register_hermes_tools():
+    hg = importlib.import_module("mitchell.coding.hermes_gateway")
+    for tool_name, _flag, _desc in hg.MANIFEST:
+        fn = getattr(hg, tool_name, None)
+        if fn is not None:
+            try:
+                mcp.add_tool(fn)
+            except Exception as e:  # noqa: BLE001
+                print(f"Skipping hermes tool {tool_name}: {e}")
+    mcp.add_tool(hg.hermes_agent)
+_register_hermes_tools()
+
+
 def main():
     mcp.run(transport="stdio")
 

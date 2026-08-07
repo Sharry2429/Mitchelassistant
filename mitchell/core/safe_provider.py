@@ -14,6 +14,8 @@ from mitchell.core.tool_provider import MCPToolProvider, ToolProvider
 
 
 def is_safe(name: str) -> bool:
+    if name.startswith("hermes_"):
+        return True  # Hermes tool gateway is intentionally exposed in full
     if name.startswith("browser_"):
         return name in {"browser_navigate", "browser_title", "browser_extract_text",
                         "browser_get_text", "browser_current_url"}
