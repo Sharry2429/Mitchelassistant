@@ -24,6 +24,7 @@ from mitchell.core.agent_pool import (
     mark_step_completed,
     mark_step_failed,
 )
+from mitchell.core import memory
 from mitchell.core.llm_client import LLMResult, call
 from mitchell.core.planner import PlanningError, create_plan
 from mitchell.core.tasks import Task, TaskState, TaskStep, list_tasks, task_all_terminal
@@ -32,6 +33,24 @@ from mitchell.core.verify import verify_step  # hard import: missing => ImportEr
 
 # Sentinel for "use the real LLM client" — lets tests inject a deterministic call.
 _REAL_CALL = call
+
+
+def _safe_log_episode(task_id, kind, summary, **kw):
+    """Best-effort ground-truth logging — never breaks execution."""
+    try:
+        memory.log_episode(task_id, kind, summary, **kw)
+    except Exception:  # noqa: BLE001 - logging must never kill a run
+        pass
+
+
+def _pattern_key(step: TaskStep) -> str | None:
+    """A stable pattern key for a step so promotion can cluster like episodes."""
+    if step.action:
+        return step.action
+    if step.description:
+        words = step.description.split()
+        return " ".join(words[:4]) if words else None
+    return None
 
 
 async def _llm_tool_loop(
@@ -177,6 +196,17 @@ async def _process_task(
         else:
             mark_step_failed(task.id, step_idx, step.error or "Failed after retries")
 
+        # Ground-truth episodic log: what actually happened, gated by whether
+        # verification passed. Only verified episodes can later be promoted.
+        _safe_log_episode(
+            task.id,
+            kind="step",
+            summary=f"{'PASS' if success else 'FAIL'} step: {step.description}",
+            verified=success,
+            pattern_key=_pattern_key(step),
+            data={"action": step.action, "error": step.error},
+        )
+
     # Finalize task state once every step is terminal.
     live = Task.load(task.id)
     if live and task_all_terminal(live):
@@ -192,6 +222,7 @@ async def _process_task(
             f"✅ Task {live.id} finished: {live.state} "
             f"({len(live.steps)} steps)"
         )
+        _safe_log_episode(live.id, kind="task", summary=f"task {live.state}", verified=(live.state == TaskState.COMPLETED))
     return True
 
 
@@ -211,6 +242,47 @@ async def execute_task(
     if task is None:
         raise FileNotFoundError(f"Task {task_id} not found")
     return await _process_task("runner", "worker-general", task, tools, planner, llm_call)
+
+
+def recover_interrupted_tasks() -> int:
+    """Resume after an unexpected kill/restart.
+
+    A task whose steps were left in RUNNING state (claimed just before the
+    process died) can never be reclaimed by claim_next_step — it would stay
+    stuck forever. This resets those steps to PENDING so a restarting worker
+    re-claims and re-runs them, and logs an 'interrupt' episode into the
+    ground-truth log so the restart has context instead of starting cold.
+
+    Returns the number of interrupted tasks recovered.
+    """
+    recovered = 0
+    for task in list_tasks():
+        interrupted = any(s.state == TaskState.RUNNING for s in task.steps)
+        if not interrupted:
+            continue
+        for step in task.steps:
+            if step.state == TaskState.RUNNING:
+                step.state = TaskState.PENDING
+                step.claimed_by = None
+                step.claimed_at = None
+        task.state = TaskState.RUNNING if task.state == TaskState.RUNNING else task.state
+        task.save()
+        recovered += 1
+        _safe_log_episode(
+            task.id,
+            kind="interrupt",
+            summary="process interrupted mid-task; steps reset to PENDING for retry",
+            verified=False,
+        )
+    return recovered
+
+
+async def run_worker_once(worker_id: str, worker_role: str, *, tools=None, planner=None, llm_call=None):
+    """Recover interrupted tasks, then run the worker (single-task or queue mode)."""
+    n = recover_interrupted_tasks()
+    if n:
+        print(f"♻️  Recovered {n} interrupted task(s) from the last session")
+    await worker_loop(worker_id, worker_role, tools=tools, planner=planner, llm_call=llm_call)
 
 
 async def worker_loop(
