@@ -53,6 +53,24 @@ def _pattern_key(step: TaskStep) -> str | None:
     return None
 
 
+def _steps_to_dicts(steps: list[TaskStep]) -> list[dict]:
+    """Serialize ONLY the planning-relevant fields (never execution state).
+
+    Persisting state/completed/verification would make a cached "repeat" reload
+    already-done steps and silently skip real work. A reusable plan must re-run
+    from PENDING, so we keep just what defines the plan.
+    """
+    return [
+        {
+            "description": s.description,
+            "action": s.action,
+            "args": s.args,
+            "depends_on": list(s.depends_on),
+        }
+        for s in steps
+    ]
+
+
 async def _llm_tool_loop(
     task_id: str,
     step: TaskStep,
@@ -223,6 +241,17 @@ async def _process_task(
             f"({len(live.steps)} steps)"
         )
         _safe_log_episode(live.id, kind="task", summary=f"task {live.state}", verified=(live.state == TaskState.COMPLETED))
+
+        # --- Phase 4 learning: a task that PASSED verification becomes reusable.
+        if live.state == TaskState.COMPLETED:
+            try:
+                memory.save_task_pattern(live.instruction, _steps_to_dicts(live.steps))
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                memory.promote_verified_patterns()
+            except Exception:  # noqa: BLE001
+                pass
     return True
 
 

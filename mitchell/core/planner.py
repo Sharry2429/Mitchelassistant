@@ -1,6 +1,12 @@
 import json
 from mitchell.core.tasks import Task, TaskStep
-from mitchell.core.memory import find_cached_plan, get_user_profile, get_skills_log
+from mitchell.core.memory import (
+    find_cached_plan,
+    get_user_profile,
+    get_skills_log,
+    retrieve_schema,
+    log_episode,
+)
 from mitchell.core.llm_client import call
 
 
@@ -15,7 +21,24 @@ class PlanningError(Exception):
 
 
 async def create_plan(task: Task) -> Task:
-    # Check cache first
+    # Phase 4 retrieval: reuse a verified procedural skill doc BEFORE deriving
+    # a fresh approach, so a task class Mitchell already solved doesn't re-derive it.
+    skill = retrieve_schema(task.instruction)
+    skill_context = ""
+    if skill:
+        skill_context = (
+            "\n\nKNOWN-SKILL (a verified approach Mitchell already solved):\n"
+            f"Title: {skill['title']}\n{skill['body']}"
+        )
+        try:
+            log_episode(task.id, "skill_used",
+                        f"retrieved skill before task: {skill['title']}",
+                        verified=True, pattern_key="skill_retrieval")
+        except Exception:  # noqa: BLE001
+            pass
+
+    # Check cache first: a previously-verified plan short-circuits the LLM
+    # entirely (measurably cheaper + faster the second time).
     cached_steps = find_cached_plan(task.instruction)
     if cached_steps:
         # Reconstruct TaskStep objects
@@ -32,11 +55,12 @@ Break down the following instruction into sequential steps.
 Available tool namespaces: 'android.*', 'windows.system', 'windows.ui', 'vision', 'browser', 'skills.*', 'research.*'
 
 Instruction: {task.instruction}
+{skill_context}
 
 User Profile Context:
 {profile}
 
-Available Custom Skills:
+Available Custom Skills (from the skills log, informational):
 {skills}
 
 Output a JSON object with a 'steps' array.
