@@ -32,3 +32,25 @@ MODEL_PRICING = {
 def pricing_for(model: str) -> dict:
     """Return {input, output} USD-per-1M-token pricing for a model."""
     return MODEL_PRICING.get(model, DEFAULT_PRICING)
+
+
+# Roles that are capability-pinned and must NEVER be downgraded to a text model.
+_VISION_ROLES = ("ui_vision", "general_vision")
+_BUDGET_LOW = 1.0  # $ remaining threshold at which cost-aware downgrade kicks in
+
+
+def select_model(role: str, remaining_budget: float | None = None) -> str:
+    """Route a role to a model, downgrading high-volume roles when budget is low.
+
+    Vision/UI roles are capability-pinned and are never swapped to a text model
+    (routing a coordinate-grounding task to a text model is a category error).
+    Everything else falls back to the cheapest model in the routing table when
+    remaining budget drops below the threshold.
+    """
+    base = MODEL_TIERS[role]
+    if role in _VISION_ROLES or remaining_budget is None:
+        return base
+    if remaining_budget < _BUDGET_LOW:
+        cheapest = min(MODEL_PRICING, key=lambda m: MODEL_PRICING[m]["output"])
+        return cheapest
+    return base

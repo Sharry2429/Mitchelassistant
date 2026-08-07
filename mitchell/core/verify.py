@@ -95,3 +95,77 @@ def verify_step(step: Any, messages: list[dict]) -> bool:
             return False
 
     return True
+
+
+# ------------------------- Levels 2-4 (Phase 1) ---------------------------
+
+def _transcript_text(transcript: list[dict]) -> str:
+    parts = []
+    for m in transcript or []:
+        c = m.get("content", "")
+        if isinstance(c, str):
+            parts.append(c)
+        elif isinstance(c, list):
+            parts.append(" ".join(x.get("text", "") for x in c if isinstance(x, dict)))
+    return "\n".join(parts)
+
+
+def verify_against_rubric(step: Any, transcript: list[dict], rubric: list[str]) -> dict:
+    """Level 2 — completion against a pre-written rubric (not agent-authored tests).
+
+    Scores the transcript against the rubric; passes at >= 0.5 coverage.
+    """
+    if not rubric:
+        return {"score": 0.0, "passed": False, "matched": [], "missing": []}
+    text = _transcript_text(transcript).lower()
+    matched = [r for r in rubric if r.lower() in text]
+    score = len(matched) / len(rubric)
+    return {"score": round(score, 2), "passed": score >= 0.5,
+            "matched": matched, "missing": [r for r in rubric if r.lower() not in text]}
+
+
+async def adversarial_review(transcript: list[dict], llm_call=None) -> tuple[bool, list[str]]:
+    """Level 3 — one cross-model adversarial review. Returns (passed, issues).
+
+    A different (top-tier) model scrutinizes the execution; APPROVED = pass,
+    anything else is treated as issues that fail the step.
+    """
+    from mitchell.core.llm_client import call as _default_call
+    inject = llm_call or _default_call
+    text = _transcript_text(transcript)
+    r = await inject("top", messages=[{"role": "user", "content":
+        f"Adversarially review this execution for hidden bugs or wrong results. "
+        f"Reply exactly APPROVED if sound, else list concrete issues.\n\n{text}"}],
+        task_id="adversarial")
+    out = (r.content or "").strip()
+    if "APPROVED" in out.upper():
+        return True, []
+    issues = [l.strip(" -•\t") for l in out.splitlines() if l.strip() and not l.strip().upper().startswith("APPROVED")]
+    return False, issues
+
+
+def device_verify(step: Any, expected_foreground: str | None = None) -> bool:
+    """Level 4 — live/device verification for behavioral steps.
+
+    For Android steps, re-reads the actual foreground app from the device and
+    compares it to what the step claims, instead of trusting the narration.
+    Returns False when the live device does not match expectation.
+    """
+    args = (step.args or {}) if hasattr(step, "args") else {}
+    if expected_foreground is None:
+        expected_foreground = args.get("expect_foreground_app")
+    if not expected_foreground:
+        return True  # nothing device-specific to assert -> vacuously pass
+    try:
+        import asyncio
+
+        async def _get():
+            from mitchell.mcp_server import mcp
+            resp = await mcp.call_tool("android_apps_get_foreground_app", arguments={})
+            texts = [c.text for c in resp if hasattr(c, "text")]
+            return "\n".join(texts) if texts else str(resp)
+
+        actual = asyncio.run(_get())
+        return expected_foreground.lower() in actual.lower()
+    except Exception:  # noqa: BLE001 - cannot reach device -> fail closed
+        return False

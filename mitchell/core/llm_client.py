@@ -1,7 +1,7 @@
 import os
 from openai import AsyncOpenAI
-from mitchell.core.models import AICREDITS_BASE_URL, MODEL_TIERS
-from mitchell.core.budget import check_budget_before_call, log_usage, estimate_cost
+from mitchell.core.models import AICREDITS_BASE_URL, MODEL_TIERS, select_model
+from mitchell.core.budget import check_budget_before_call, log_usage, estimate_cost, remaining_budget
 from dataclasses import dataclass
 
 @dataclass
@@ -25,7 +25,8 @@ async def call(role: str, messages: list, tools: list | None = None,
     if role not in MODEL_TIERS:
         raise ValueError(f"Unknown role: {role}")
     
-    model = MODEL_TIERS[role]
+    # Cost-aware routing: downgrade high-volume roles when remaining budget is low.
+    model = select_model(role, remaining_budget())
     
     # Enforce budget before call
     check_budget_before_call(role, task_id)
